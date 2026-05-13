@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --color-surface: #0f1117;
+  --color-muted: #9ca3af;
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --ccny-violet: #5b2d82;
+  --ccny-gold: #c9a227;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background: #0b0c10;
+  color: #e5e7eb;
+}
+
+#root {
+  min-height: 100vh;
+}

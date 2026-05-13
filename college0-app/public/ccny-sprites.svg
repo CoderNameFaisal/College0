@@ -1,0 +1,72 @@
+<!--
+  CCNY-inspired decorative sprites (original artwork; not an official CCNY logo).
+  Use: <svg class="w-8 h-8"><use href="/ccny-sprites.svg#ccny-gothic-arch" /></svg>
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <!-- Neo-Gothic pointed arch / window (Hamilton Heights campus feel) -->
+    <symbol id="ccny-gothic-arch" viewBox="0 0 64 88">
+      <path
+        fill="currentColor"
+        d="M32 4 52 22v54H12V22L32 4Zm0 8L20 26v44h24V26L32 12Zm-8 36h16v6H24v-6Zm0 12h16v6H24v-6Z"
+        opacity="0.92"
+      />
+      <path fill="currentColor" d="M30 78h4v6h-4z" opacity="0.65" />
+    </symbol>
+
+    <!-- Tower spire pair -->
+    <symbol id="ccny-towers" viewBox="0 0 96 72">
+      <path
+        fill="currentColor"
+        d="M22 70V28l10-18 10 18v42H22Zm32 0V32l8-14 8 14v38H54Z"
+        opacity="0.85"
+      />
+      <path fill="currentColor" d="M26 70h12v4H26v-4Zm32 0h12v4H58v-4Z" opacity="0.5" />
+    </symbol>
+
+    <!-- Open book -->
+    <symbol id="ccny-book" viewBox="0 0 64 48">
+      <path
+        fill="currentColor"
+        d="M6 10c8-2 16-2 24 0v30c-8-2-16-2-24 0V10Zm28 0c8-2 16-2 24 0v30c-8-2-16-2-24 0V10Z"
+        opacity="0.9"
+      />
+      <path fill="currentColor" d="M30 8h4v34h-4V8Z" opacity="0.45" />
+      <path
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        d="M14 16h10M14 22h8M40 16h10M42 22h8"
+        opacity="0.4"
+      />
+    </symbol>
+
+    <!-- Torch / light of learning -->
+    <symbol id="ccny-torch" viewBox="0 0 48 80">
+      <path
+        fill="currentColor"
+        d="M24 6c4 6 6 12 4 18-2 4-6 6-10 4-4-2-4-8 0-14 2-3 4-6 6-8Z"
+        opacity="0.95"
+      />
+      <path fill="currentColor" d="M21 28h6l2 38H19l2-38Z" opacity="0.75" />
+      <path fill="currentColor" d="M16 68h16v6H16v-6Z" opacity="0.55" />
+    </symbol>
+
+    <!-- Beavers stylized paw print (school spirit; geometric) -->
+    <symbol id="ccny-paw" viewBox="0 0 56 56">
+      <ellipse cx="28" cy="38" rx="12" ry="10" fill="currentColor" opacity="0.85" />
+      <circle cx="16" cy="22" r="6" fill="currentColor" opacity="0.75" />
+      <circle cx="28" cy="14" r="6.5" fill="currentColor" opacity="0.75" />
+      <circle cx="40" cy="22" r="6" fill="currentColor" opacity="0.75" />
+      <circle cx="22" cy="28" r="4.5" fill="currentColor" opacity="0.55" />
+      <circle cx="34" cy="28" r="4.5" fill="currentColor" opacity="0.55" />
+    </symbol>
+
+    <!-- Hamilton Grange / stone course lines (horizontal band) -->
+    <symbol id="ccny-stone-band" viewBox="0 0 120 24">
+      <rect width="120" height="4" y="0" fill="currentColor" opacity="0.35" />
+      <rect width="120" height="3" y="8" fill="currentColor" opacity="0.25" />
+      <rect width="120" height="3" y="16" fill="currentColor" opacity="0.2" />
+    </symbol>
+  </defs>
+</svg>
