@@ -56,8 +56,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Re-evaluate the auto-accept rule so we can give a clear error before
-    // creating the auth user. (The DB RPC also enforces this server-side.)
     const { data: sem } = await admin
       .from('semesters')
       .select('id,quota,phase')
@@ -105,7 +103,6 @@ Deno.serve(async (req) => {
       )
     }
 
-    // `handle_new_user` trigger already created the profile. Add the student_id.
     await admin.from('profiles').update({ student_id: studentId }).eq('id', createRes.user.id)
 
     await admin

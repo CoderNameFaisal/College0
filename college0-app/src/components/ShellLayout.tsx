@@ -24,6 +24,9 @@ export function ShellLayout() {
             <NavLink to="/" className={linkClass} end>
               Home
             </NavLink>
+            <NavLink to="/class-locations" className={linkClass}>
+              Course map
+            </NavLink>
             {!user && (
               <>
                 <NavLink to="/apply/student" className={linkClass}>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
-import { invokeEdgeSession } from '../../lib/invokeEdge'
 import type { SemesterPhase } from '../../types/database'
 
 type Semester = {
@@ -43,12 +42,39 @@ export function RegistrarSemestersPage() {
     const idx = phases.indexOf(current)
     if (idx < 0 || idx >= phases.length - 1) return
     const next = phases[idx + 1]
-    try {
-      await invokeEdgeSession('transition-phase', { semester_id: id, next_phase: next })
-      void load()
-    } catch (err) {
-      setMsg(err instanceof Error ? err.message : String(err))
+    const { error } = await supabase.rpc('rpc_transition_semester_phase', {
+      p_semester_id: id,
+      p_next_phase: next,
+    })
+    if (error) setMsg(error.message)
+    else void load()
+  }
+
+  async function revert(id: string, current: SemesterPhase) {
+    setMsg(null)
+    const idx = phases.indexOf(current)
+    if (idx <= 0) return
+    const prev = phases[idx - 1]
+    const { error } = await supabase.rpc('rpc_transition_semester_phase', {
+      p_semester_id: id,
+      p_next_phase: prev,
+    })
+    if (error) setMsg(error.message)
+    else void load()
+  }
+
+  async function removeSemester(id: string, label: string) {
+    setMsg(null)
+    if (
+      !window.confirm(
+        `Delete semester "${label}"? Only allowed while phase is setup and there are no classes.`,
+      )
+    ) {
+      return
     }
+    const { error } = await supabase.rpc('rpc_delete_semester', { p_semester_id: id })
+    if (error) setMsg(error.message)
+    else void load()
   }
 
   return (
@@ -90,15 +116,35 @@ export function RegistrarSemestersPage() {
                 Phase: <span className="text-indigo-300">{s.phase}</span> · quota {s.quota}
               </div>
             </div>
-            {s.phase !== 'closed' && (
-              <button
-                type="button"
-                className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={() => void advance(s.id, s.phase)}
-              >
-                Advance phase
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {s.phase !== 'setup' && (
+                <button
+                  type="button"
+                  className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-800"
+                  onClick={() => void revert(s.id, s.phase)}
+                >
+                  Reverse phase
+                </button>
+              )}
+              {s.phase !== 'closed' && (
+                <button
+                  type="button"
+                  className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-800"
+                  onClick={() => void advance(s.id, s.phase)}
+                >
+                  Advance phase
+                </button>
+              )}
+              {s.phase === 'setup' && (
+                <button
+                  type="button"
+                  className="rounded border border-red-900/60 bg-red-950/30 px-3 py-1.5 text-sm text-red-200 hover:bg-red-950/50"
+                  onClick={() => void removeSemester(s.id, s.name)}
+                >
+                  Delete semester
+                </button>
+              )}
+            </div>
           </li>
         ))}
       </ul>

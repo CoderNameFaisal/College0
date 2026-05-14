@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { invokeEdgeSession } from '../../lib/invokeEdge'
 
 type AIResponse = {
@@ -8,6 +9,8 @@ type AIResponse = {
 }
 
 export function StudentAIPage() {
+  const [searchParams] = useSearchParams()
+  const focusClassId = searchParams.get('class_id')
   const [message, setMessage] = useState('')
   const [response, setResponse] = useState<AIResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -19,7 +22,9 @@ export function StudentAIPage() {
     setErr(null)
     setResponse(null)
     try {
-      const r = await invokeEdgeSession<AIResponse>('ai-chat', { message: message.trim() })
+      const body: Record<string, unknown> = { message: message.trim() }
+      if (focusClassId) body.class_id = focusClassId
+      const r = await invokeEdgeSession<AIResponse>('ai-chat', body)
       setResponse(r)
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e))
@@ -35,6 +40,12 @@ export function StudentAIPage() {
         <p className="text-sm text-zinc-500">
           Ask about the college system or your current courses. Answers come from the local
           knowledge base first; if nothing matches, the LLM answers with a hallucination warning.
+          {focusClassId && (
+            <span className="mt-1 block text-xs text-indigo-300">
+              Focusing one section (class_id in URL) — you must be enrolled for extra section
+              context.
+            </span>
+          )}
         </p>
       </div>
 

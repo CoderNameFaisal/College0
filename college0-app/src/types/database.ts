@@ -22,6 +22,7 @@ export type ProfileRow = {
   warning_count: number
   cumulative_gpa: number | null
   honor_roll_count: number
+  honor_awarded_cumulative_35: boolean
   first_login: boolean
   special_registration_eligible: boolean
   created_at: string
@@ -53,9 +54,17 @@ export type Database = {
           title: string
           instructor_id: string | null
           schedule_time: string
+          course_start_date: string
+          course_end_date: string
+          meeting_days: number[]
+          period_start: string
+          period_end: string
           max_students: number
           avg_rating: number | null
           is_cancelled: boolean
+          location_lat: number | null
+          location_lng: number | null
+          location_label: string | null
           created_at: string
           updated_at: string
         }
@@ -229,6 +238,8 @@ export type Database = {
     }
     Functions: {
       rpc_transition_semester_phase: { Args: { p_semester_id: string; p_next_phase: SemesterPhase }; Returns: string }
+      rpc_delete_semester: { Args: { p_semester_id: string }; Returns: string }
+      rpc_course_cancellation_scan: { Args: Record<string, never>; Returns: unknown }
       rpc_enroll_in_class: { Args: { p_class_id: string }; Returns: string }
       rpc_post_grade: { Args: { p_enrollment_id: string; p_grade: GradeLetter }; Returns: string }
       rpc_warn_user: { Args: { p_target_id: string; p_reason: string }; Returns: string }
@@ -257,6 +268,7 @@ export type Database = {
       rpc_promote_waitlist: { Args: { p_enrollment_id: string }; Returns: string }
       rpc_reject_waitlist: { Args: { p_enrollment_id: string }; Returns: string }
       rpc_drop_class: { Args: { p_enrollment_id: string }; Returns: string }
+      rpc_redeem_honor_for_warning: { Args: Record<string, never>; Returns: string }
     }
   }
 }

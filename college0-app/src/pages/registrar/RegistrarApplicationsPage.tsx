@@ -96,19 +96,18 @@ export function RegistrarApplicationsPage() {
       return
     }
     try {
-      const res = await invokeEdgeSession<AcceptResult & { ok: boolean }>(
-        'accept-student-application',
-        {
-          application_id: a.id,
-          justification: d.justification.trim() || null,
-          full_name: d.fullName.trim() || null,
-        },
-      )
+      const res = await invokeEdgeSession<
+        AcceptResult & { ok: boolean; user_id?: string; temp_password?: string }
+      >('accept-student-application', {
+        application_id: a.id,
+        justification: d.justification.trim() || null,
+        full_name: d.fullName.trim() || null,
+      })
       setAcceptResult({
         application_id: a.id,
         email: res.email ?? a.applicant_email,
         student_id: res.student_id,
-        temp_password: res.temp_password,
+        temp_password: res.temp_password ?? '',
       })
       setDrafts((dr) => ({ ...dr, [a.id]: { justification: '', fullName: '' } }))
       await load()
@@ -147,7 +146,7 @@ export function RegistrarApplicationsPage() {
     if (error) setMsg(error.message)
     else {
       setMsg(
-        `Instructor application accepted. Have ${a.applicant_email} sign up via the public signup page; you can then assign classes from the instructor detail page.`,
+        `Instructor application accepted. In Supabase Dashboard → Authentication → Users, add user ${a.applicant_email} with User Metadata JSON including "role":"instructor" and "full_name":"…" (see README). Then open Registrar → Instructors, open their profile, and assign classes.`,
       )
       await load()
     }
@@ -171,7 +170,8 @@ export function RegistrarApplicationsPage() {
         Active student quota: <span className="text-white">{activeStudents}</span> of{' '}
         <span className="text-white">{quota ?? '—'}</span> filled.
         {' '}Rule: GPA &gt; 3.0 + quota available → must accept (justification needed to override either
-        way).
+        way). Accepting creates an account and shows a <strong>temporary password</strong> here — share
+        it with the student securely (this app does not email it). Rejecting does not create an account.
       </div>
 
       {msg && <p className="text-sm text-amber-300">{msg}</p>}
@@ -184,12 +184,12 @@ export function RegistrarApplicationsPage() {
             <dd>{acceptResult.email}</dd>
             <dt className="text-zinc-500">Student ID</dt>
             <dd className="font-mono">{acceptResult.student_id}</dd>
-            <dt className="text-zinc-500">Temp password</dt>
-            <dd className="font-mono">{acceptResult.temp_password}</dd>
+            <dt className="text-zinc-500">Temporary password</dt>
+            <dd className="font-mono break-all">{acceptResult.temp_password}</dd>
           </dl>
           <p className="mt-2 text-xs text-zinc-400">
-            Deliver these credentials to the applicant. They'll be prompted to change the password on
-            first login.
+            Share the temporary password with the student through a secure channel. They can sign in with
+            their email and change the password after first login.
           </p>
           <button
             type="button"
@@ -260,7 +260,11 @@ export function RegistrarApplicationsPage() {
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       <input
                         className="rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white"
-                        placeholder={isStudent ? "Full name (optional, defaults to email's local part)" : 'Full name (used at signup)'}
+                        placeholder={
+                          isStudent
+                            ? "Full name (optional, defaults to email's local part)"
+                            : 'Full name (shown on profile after Auth user is created)'
+                        }
                         value={d.fullName}
                         onChange={(e) => updateDraft(a.id, { fullName: e.target.value })}
                       />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { RedirectIfAuthed } from '../components/RequireRole'
 import { CcnySprite } from '../components/CcnySprite'
@@ -145,18 +145,11 @@ export function LoginPage() {
               </button>
             </form>
 
-            <div className="flex items-center gap-3 pt-2">
-              <CcnySprite id="ccny-paw" className="h-8 w-8 shrink-0 text-[#c9a227]/60" title="School spirit" />
-              <p className="text-xs text-zinc-500">
-                New to the pilot?{' '}
-                <Link
-                  to="/signup"
-                  className="font-medium text-[#d4b54a] underline-offset-4 hover:text-[#e8c85c] hover:underline"
-                >
-                  Create an account
-                </Link>
-              </p>
-            </div>
+            <p className="border-t border-white/10 pt-4 text-xs text-zinc-500">
+              Accounts are not self-registered here. Use <strong className="text-zinc-400">Apply as a student</strong> or{' '}
+              <strong className="text-zinc-400">Apply as an instructor</strong> on the home page; the registrar creates logins
+              when an application is accepted.
+            </p>
           </div>
         </div>
       </div>

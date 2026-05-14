@@ -16,10 +16,12 @@ type EnrollmentHistory = {
 const gradePoints: Record<GradeLetter, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 }
 
 export function StudentProfilePage() {
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const [enrollments, setEnrollments] = useState<EnrollmentHistory[]>([])
   const [warnings, setWarnings] = useState<{ id: string; reason: string; created_at: string }[]>([])
   const [loading, setLoading] = useState(true)
+  const [redeemMsg, setRedeemMsg] = useState<string | null>(null)
+  const [redeemBusy, setRedeemBusy] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -84,6 +86,28 @@ export function StudentProfilePage() {
     return (sum / graded.length).toFixed(2)
   }
 
+  async function redeemHonorForWarning() {
+    setRedeemMsg(null)
+    setRedeemBusy(true)
+    const { error } = await supabase.rpc('rpc_redeem_honor_for_warning')
+    setRedeemBusy(false)
+    if (error) {
+      setRedeemMsg(error.message)
+      return
+    }
+    await refreshProfile()
+    if (user) {
+      const { data: warn } = await supabase
+        .from('warnings')
+        .select('id,reason,created_at')
+        .eq('target_id', user.id)
+        .eq('is_removed', false)
+        .order('created_at', { ascending: false })
+      setWarnings((warn as { id: string; reason: string; created_at: string }[]) ?? [])
+    }
+    setRedeemMsg('One honor credit was applied to remove your oldest active warning.')
+  }
+
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold text-white">My profile & records</h1>
@@ -100,11 +124,39 @@ export function StudentProfilePage() {
             label="Honor roll"
             value={isHonorRoll ? 'Yes ⭐' : 'No'}
           />
+          <Field label="Honor credits" value={profile?.honor_roll_count ?? 0} />
           <Field
             label="Special registration"
             value={profile?.special_registration_eligible ? 'Eligible' : '—'}
           />
         </div>
+        {profile?.role === 'student' &&
+          (profile.honor_roll_count ?? 0) > 0 &&
+          warnings.length > 0 && (
+            <div className="mt-4 rounded border border-indigo-800/50 bg-indigo-950/25 p-3 text-sm text-indigo-100">
+              <p className="text-xs text-indigo-200/90">
+                You can spend <strong>one</strong> honor credit to remove your <strong>oldest</strong> active
+                warning (program policy).
+              </p>
+              {redeemMsg && (
+                <p
+                  className={`mt-2 text-xs ${
+                    redeemMsg.startsWith('One honor') ? 'text-emerald-300' : 'text-amber-300'
+                  }`}
+                >
+                  {redeemMsg}
+                </p>
+              )}
+              <button
+                type="button"
+                disabled={redeemBusy}
+                onClick={() => void redeemHonorForWarning()}
+                className="mt-2 rounded bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-500 disabled:opacity-50"
+              >
+                {redeemBusy ? 'Applying…' : 'Use one honor credit on oldest warning'}
+              </button>
+            </div>
+          )}
         <p className="mt-4 text-xs text-zinc-500">
           Update your name or password in{' '}
           <Link to="/account" className="text-indigo-300 hover:underline">

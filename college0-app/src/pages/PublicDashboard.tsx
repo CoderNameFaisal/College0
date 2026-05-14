@@ -37,10 +37,10 @@ export function PublicDashboard() {
       <header className="space-y-3">
         <h1 className="text-3xl font-semibold text-white">College0</h1>
         <p className="max-w-3xl text-zinc-300">
-          College0 is a graduate program management system. Students apply for admission, register
-          for classes each semester, and graduate after completing the required coursework.
-          Instructors teach assigned classes and grade their students. The registrar oversees
-          semesters, applications, complaints, and academic standing.
+          College0 is an <strong className="text-zinc-200">AI-enabled</strong> graduate program management system.
+          Students apply for admission, register for classes each semester, and graduate after completing the
+          required coursework. Instructors teach registrar-assigned classes and grade their students. The registrar
+          manages semesters, phases, applications, complaints, and academic standing.
         </p>
         <p className="max-w-3xl text-sm text-zinc-500">
           The dashboard below is public — no login required. Use the navigation above to apply for

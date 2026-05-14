@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { corsJson, handleCors } from '../_shared/cors.ts'
+import { geminiGenerateJson } from '../_shared/gemini.ts'
 
 Deno.serve(async (req) => {
   const opt = handleCors(req)
@@ -12,8 +13,8 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseAnon = Deno.env.get('SUPABASE_ANON_KEY')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const openaiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openaiKey) return corsJson({ error: 'OPENAI_API_KEY not configured' }, 500)
+    const geminiKey = Deno.env.get('GEMINI_API_KEY')
+    if (!geminiKey) return corsJson({ error: 'GEMINI_API_KEY not configured' }, 500)
 
     const userClient = createClient(supabaseUrl, supabaseAnon, {
       global: { headers: { Authorization: authHeader } },
@@ -50,26 +51,14 @@ Deno.serve(async (req) => {
       }))
     }
 
-    const prompt = `Pick up to 3 study partners for student ${user.id} from: ${JSON.stringify(peers)}. Respond JSON only: {"suggestions":[{"student_id":"uuid","reason":"short"}]}`
+    const prompt = `Pick up to 3 study partners for student ${user.id} from: ${JSON.stringify(peers)}. Respond with this exact JSON shape: {"suggestions":[{"student_id":"uuid","reason":"short"}]}`
 
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: 'Output valid JSON only.' },
-          { role: 'user', content: prompt },
-        ],
-        temperature: 0.3,
-      }),
+    const raw = await geminiGenerateJson({
+      apiKey: geminiKey,
+      systemInstruction: 'Output only valid JSON matching the requested shape. No markdown.',
+      userMessage: prompt,
+      temperature: 0.3,
     })
-    if (!res.ok) return corsJson({ error: await res.text() }, 500)
-    const json = await res.json()
-    const raw = json.choices[0].message.content as string
     let parsed: { suggestions?: { student_id: string; reason: string }[] }
     try {
       parsed = JSON.parse(raw.replace(/```json\n?|\n?```/g, ''))

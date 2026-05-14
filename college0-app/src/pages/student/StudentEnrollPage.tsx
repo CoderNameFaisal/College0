@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { formatClassSchedule, schedulesOverlap, type ClassScheduleFields } from '../../lib/classSchedule'
 import type { EnrollmentStatus, GradeLetter, SemesterPhase } from '../../types/database'
+import { ClassLocationMap } from '../../components/ClassLocationMap'
+import { CourseGeminiPanel } from '../../components/CourseGeminiPanel'
 
 type SemesterRow = { id: string; name: string; phase: SemesterPhase }
 
-type ClassRow = {
+type ClassRow = ClassScheduleFields & {
   id: string
   course_code: string
   title: string
   schedule_time: string
   max_students: number
   is_cancelled: boolean
+  location_lat: number | null
+  location_lng: number | null
+  location_label: string | null
   instructor: { full_name: string } | null
 }
 
@@ -20,7 +26,14 @@ type Enrollment = {
   status: EnrollmentStatus
   grade: GradeLetter | null
   class_id: string
-  class: { course_code: string; title: string; schedule_time: string } | null
+  class: (ClassScheduleFields & {
+    course_code: string
+    title: string
+    schedule_time: string
+    location_lat: number | null
+    location_lng: number | null
+    location_label: string | null
+  }) | null
 }
 
 export function StudentEnrollPage() {
@@ -57,21 +70,25 @@ export function StudentEnrollPage() {
     const [cls, mine, hist, counts] = await Promise.all([
       supabase
         .from('classes')
-        .select('id,course_code,title,schedule_time,max_students,is_cancelled,instructor:profiles!classes_instructor_id_fkey(full_name)')
+        .select(
+          'id,course_code,title,schedule_time,course_start_date,course_end_date,meeting_days,period_start,period_end,max_students,is_cancelled,location_lat,location_lng,location_label,instructor:profiles!classes_instructor_id_fkey(full_name)',
+        )
         .eq('semester_id', semRow.id)
         .eq('is_cancelled', false)
         .order('course_code'),
       supabase
         .from('enrollments')
         .select(
-          'id,status,grade,class_id,class:classes(course_code,title,schedule_time)',
+          'id,status,grade,class_id,class:classes(course_code,title,schedule_time,course_start_date,course_end_date,meeting_days,period_start,period_end,location_lat,location_lng,location_label)',
         )
         .eq('student_id', user.id)
         .eq('semester_id', semRow.id)
         .neq('status', 'dropped'),
       supabase
         .from('enrollments')
-        .select('id,status,grade,class_id,class:classes(course_code,title,schedule_time)')
+        .select(
+          'id,status,grade,class_id,class:classes(course_code,title,schedule_time,course_start_date,course_end_date,meeting_days,period_start,period_end,location_lat,location_lng,location_label)',
+        )
         .eq('student_id', user.id)
         .not('grade', 'is', null),
       supabase
@@ -134,9 +151,21 @@ export function StudentEnrollPage() {
   }
 
   function classConflictsWith(c: ClassRow) {
-    return myCurrent.some(
-      (e) => e.class && e.class.schedule_time && rangesOverlap(e.class.schedule_time, c.schedule_time),
-    )
+    return myCurrent.some((e) => {
+      const o = e.class
+      if (!o?.meeting_days?.length || !c.meeting_days?.length) return false
+      return schedulesOverlap(
+        {
+          course_start_date: o.course_start_date,
+          course_end_date: o.course_end_date,
+          meeting_days: o.meeting_days,
+          period_start: o.period_start,
+          period_end: o.period_end,
+          schedule_time: o.schedule_time,
+        },
+        c,
+      )
+    })
   }
 
   return (
@@ -183,25 +212,42 @@ export function StudentEnrollPage() {
             {myCurrent.map((e) => (
               <li
                 key={e.id}
-                className="flex flex-wrap items-baseline justify-between gap-2 rounded border border-zinc-800 bg-zinc-900/40 p-3 text-sm"
+                className="space-y-2 rounded border border-zinc-800 bg-zinc-900/40 p-3 text-sm"
               >
-                <div>
-                  <span className="text-white">
-                    {e.class?.course_code} · {e.class?.title}
-                  </span>
-                  <span className="ml-2 text-xs text-zinc-500">
-                    {e.class && formatTsRange(e.class.schedule_time)} · {e.status}
-                  </span>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div>
+                    <span className="text-white">
+                      {e.class?.course_code} · {e.class?.title}
+                    </span>
+                    <span className="ml-2 text-xs text-zinc-500">
+                      {e.class && formatClassSchedule(e.class)} · {e.status}
+                    </span>
+                  </div>
+                  {registrationOpen && (
+                    <button
+                      type="button"
+                      onClick={() => void drop(e.id)}
+                      disabled={busy === e.id}
+                      className="rounded border border-zinc-600 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
+                    >
+                      Drop
+                    </button>
+                  )}
                 </div>
-                {registrationOpen && (
-                  <button
-                    type="button"
-                    onClick={() => void drop(e.id)}
-                    disabled={busy === e.id}
-                    className="rounded border border-zinc-600 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
-                  >
-                    Drop
-                  </button>
+                {e.class?.location_lat != null && e.class?.location_lng != null && (
+                  <div className="w-full max-w-md">
+                    {e.class.location_label && (
+                      <p className="mb-1 text-xs text-zinc-400">{e.class.location_label}</p>
+                    )}
+                    <ClassLocationMap lat={e.class.location_lat} lng={e.class.location_lng} height={160} />
+                  </div>
+                )}
+                {e.class_id && e.class?.course_code && e.class?.title && (
+                  <CourseGeminiPanel
+                    classId={e.class_id}
+                    courseCode={e.class.course_code}
+                    title={e.class.title}
+                  />
                 )}
               </li>
             ))}
@@ -245,7 +291,7 @@ export function StudentEnrollPage() {
                       {c.course_code} · {c.title}
                     </div>
                     <div className="text-xs text-zinc-500">
-                      {formatTsRange(c.schedule_time)} ·{' '}
+                      {formatClassSchedule(c)} ·{' '}
                       {c.instructor?.full_name ?? 'TBA'} ·{' '}
                       <span className={full ? 'text-amber-300' : 'text-emerald-300'}>
                         {seatsLeft} of {c.max_students} seats left
@@ -254,6 +300,21 @@ export function StudentEnrollPage() {
                         <span className="ml-2 text-red-300">{disabledReason}</span>
                       )}
                     </div>
+                    {c.location_lat != null && c.location_lng != null && (
+                      <div className="mt-2 w-full max-w-md">
+                        {c.location_label && (
+                          <p className="mb-1 text-xs text-zinc-400">{c.location_label}</p>
+                        )}
+                        <ClassLocationMap lat={c.location_lat} lng={c.location_lng} height={180} />
+                      </div>
+                    )}
+                    {alreadyIn && (
+                      <CourseGeminiPanel
+                        classId={c.id}
+                        courseCode={c.course_code}
+                        title={c.title}
+                      />
+                    )}
                   </div>
                   <button
                     type="button"
@@ -281,34 +342,4 @@ export function StudentEnrollPage() {
       </p>
     </div>
   )
-}
-
-function rangesOverlap(a: string, b: string): boolean {
-  const A = parseTsRange(a)
-  const B = parseTsRange(b)
-  if (!A || !B) return false
-  return A[0] < B[1] && B[0] < A[1]
-}
-
-function parseTsRange(raw: string): [number, number] | null {
-  const m = raw.match(/[[(]\s*"?([^,"]+)"?\s*,\s*"?([^,"]+)"?\s*[\])]/)
-  if (!m) return null
-  const a = Date.parse(m[1])
-  const b = Date.parse(m[2])
-  if (Number.isNaN(a) || Number.isNaN(b)) return null
-  return [a, b]
-}
-
-function formatTsRange(raw: string): string {
-  const r = parseTsRange(raw)
-  if (!r) return raw
-  const a = new Date(r[0])
-  const b = new Date(r[1])
-  const date = a.toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  })
-  const t = (d: Date) => d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-  return `${date} ${t(a)}–${t(b)}`
 }

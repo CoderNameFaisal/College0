@@ -4,8 +4,8 @@ import { ShellLayout } from './components/ShellLayout'
 import { RegistrarLayout } from './components/RegistrarLayout'
 import { RequireAuth, RequireRole } from './components/RequireRole'
 import { PublicDashboard } from './pages/PublicDashboard'
+import { PublicClassLocationsPage } from './pages/PublicClassLocationsPage'
 import { LoginPage } from './pages/LoginPage'
-import { SignupPage } from './pages/SignupPage'
 import { FirstLoginPage } from './pages/FirstLoginPage'
 import { RegistrarHome } from './pages/registrar/RegistrarHome'
 import { RegistrarSemestersPage } from './pages/registrar/RegistrarSemestersPage'
@@ -69,9 +69,9 @@ export default function App() {
               }
             />
             <Route path="login" element={<LoginPage />} />
-            <Route path="signup" element={<SignupPage />} />
             <Route path="apply/student" element={<VisitorApplyStudentPage />} />
             <Route path="apply/instructor" element={<VisitorApplyInstructorPage />} />
+            <Route path="class-locations" element={<PublicClassLocationsPage />} />
             <Route path="ai" element={<VisitorAIPage />} />
 
             <Route

@@ -41,8 +41,9 @@ export function VisitorApplyStudentPage() {
           registrar review.
         </p>
         <p className="text-sm text-emerald-100/80">
-          If you're accepted, you'll receive an email at <code>{email}</code> with your student ID
-          and a temporary password. You'll be asked to change it on first login.
+          When the registrar <strong>accepts</strong> your application, you will receive login
+          credentials (student ID and a temporary password) from the registrar. If you are{' '}
+          <strong>rejected</strong>, you will see the status update here when you check back.
         </p>
         <div className="pt-2">
           <Link to="/" className="text-sm text-emerald-300 underline">

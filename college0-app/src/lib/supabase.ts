@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = String(import.meta.env.VITE_SUPABASE_URL ?? '').trim()
+const url = String(import.meta.env.VITE_SUPABASE_URL ?? '')
+  .trim()
+  .replace(/\/+$/, '')
 const anon = String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim()
 
 if (!url || !anon) {
@@ -11,7 +13,7 @@ if (!url || !anon) {
     '1. File: college0-app/.env next to vite.config.ts (vite is now pinned to load .env from that folder).',
     '2. Two lines (save the file — if the editor shows only 1 line, the anon line may be unsaved):',
     '   VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co',
-    '   VITE_SUPABASE_ANON_KEY=eyJ... or sb_publishable_...',
+    '   VITE_SUPABASE_ANON_KEY=eyJ... (legacy anon JWT from API settings; required for some Edge Functions unless verify_jwt is disabled per function)',
     '3. Verify in terminal: cd college0-app && grep "^VITE_" .env',
     '4. Restart dev: Ctrl+C, then npm run dev',
   ].join('\n')

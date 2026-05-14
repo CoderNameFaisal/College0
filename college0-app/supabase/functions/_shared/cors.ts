@@ -3,7 +3,8 @@ import type { UserRole } from '../types/database'
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+    'authorization, x-client-info, apikey, content-type, x-supabase-api-version',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 }
 
 export function corsJson(body: unknown, status = 200) {

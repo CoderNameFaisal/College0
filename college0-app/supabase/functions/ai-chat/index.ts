@@ -1,43 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { corsJson, handleCors, roleFromProfile } from '../_shared/cors.ts'
-
-async function embed(apiKey: string, input: string): Promise<number[]> {
-  const res = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'text-embedding-3-small',
-      input,
-    }),
-  })
-  if (!res.ok) throw new Error(await res.text())
-  const json = await res.json()
-  return json.data[0].embedding as number[]
-}
-
-async function chatComplete(
-  apiKey: string,
-  messages: { role: string; content: string }[],
-): Promise<string> {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages,
-      temperature: 0.4,
-    }),
-  })
-  if (!res.ok) throw new Error(await res.text())
-  const json = await res.json()
-  return json.choices[0].message.content as string
-}
+import { geminiEmbedText, geminiGenerateText } from '../_shared/gemini.ts'
 
 Deno.serve(async (req) => {
   const opt = handleCors(req)
@@ -49,8 +12,8 @@ Deno.serve(async (req) => {
     // unauthenticated (visitor) calls that pass only the anon key as bearer.
     if (!authHeader) return corsJson({ error: 'Missing authorization' }, 401)
 
-    const openaiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openaiKey) return corsJson({ error: 'OPENAI_API_KEY not configured' }, 500)
+    const geminiKey = Deno.env.get('GEMINI_API_KEY')
+    if (!geminiKey) return corsJson({ error: 'GEMINI_API_KEY not configured' }, 500)
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseAnon = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -76,16 +39,17 @@ Deno.serve(async (req) => {
     }
 
     const role = user ? roleFromProfile(profile?.role ?? null) : 'visitor'
-    const { message } = await req.json()
+    const body = (await req.json()) as Record<string, unknown>
+    const message = body.message
+    const classIdRaw = body.class_id
     if (!message || typeof message !== 'string') {
       return corsJson({ error: 'message required' }, 400)
     }
 
-    const vec = await embed(openaiKey, message)
-    const vecLiteral = `[${vec.join(',')}]`
+    const vec = await geminiEmbedText({ apiKey: geminiKey, text: message, taskType: 'RETRIEVAL_QUERY' })
 
     const { data: chunks, error: matchErr } = await admin.rpc('match_documents', {
-      query_embedding: vecLiteral,
+      query_embedding: vec,
       match_count: 6,
     })
     if (matchErr) return corsJson({ error: matchErr.message }, 400)
@@ -138,7 +102,7 @@ Deno.serve(async (req) => {
       const { data: rows } = await userClient
         .from('enrollments')
         .select(
-          'status,grade,class:classes(course_code,title,schedule_time,instructor:profiles!classes_instructor_id_fkey(full_name),semester:semesters(name,phase))',
+          'status,grade,class:classes(course_code,title,schedule_time,location_label,location_lat,location_lng,instructor:profiles!classes_instructor_id_fkey(full_name),semester:semesters(name,phase))',
         )
         .eq('student_id', user.id)
         .neq('status', 'dropped')
@@ -152,28 +116,94 @@ Deno.serve(async (req) => {
               course_code: string
               title: string
               schedule_time: string
+              location_label: string | null
+              location_lat: number | null
+              location_lng: number | null
               instructor: { full_name: string } | null
               semester: { name: string; phase: string } | null
             } | null
           }>)
-            .map((e) =>
-              `  - ${e.class?.course_code ?? '?'} · ${e.class?.title ?? '?'} (semester ${e.class?.semester?.name ?? '?'}/${e.class?.semester?.phase ?? '?'}, instructor ${e.class?.instructor?.full_name ?? 'TBA'}, schedule ${e.class?.schedule_time ?? '?'}, status ${e.status}, grade ${e.grade ?? '—'})`,
-            )
+            .map((e) => {
+              const loc =
+                e.class?.location_lat != null && e.class?.location_lng != null
+                  ? `, location lat/lng ${e.class.location_lat},${e.class.location_lng} (${e.class.location_label ?? 'no label'})`
+                  : ''
+              return `  - ${e.class?.course_code ?? '?'} · ${e.class?.title ?? '?'} (semester ${e.class?.semester?.name ?? '?'}/${e.class?.semester?.phase ?? '?'}, instructor ${e.class?.instructor?.full_name ?? 'TBA'}, schedule ${e.class?.schedule_time ?? '?'}${loc}, status ${e.status}, grade ${e.grade ?? '—'})`
+            })
             .join('\n')
       }
     }
 
-    const noLocal = !context.trim() && !instructorContext && !studentContext
+    /** Optional single-class focus (Gemini context); access-checked per role. */
+    let focusedClassContext = ''
+    if (
+      user &&
+      classIdRaw &&
+      typeof classIdRaw === 'string' &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(classIdRaw)
+    ) {
+      let allowClass = false
+      if (role === 'registrar') allowClass = true
+      else if (role === 'instructor') {
+        const { data: own } = await userClient
+          .from('classes')
+          .select('id')
+          .eq('id', classIdRaw)
+          .eq('instructor_id', user.id)
+          .maybeSingle()
+        allowClass = !!own
+      } else if (role === 'student') {
+        const { data: en } = await userClient
+          .from('enrollments')
+          .select('id')
+          .eq('student_id', user.id)
+          .eq('class_id', classIdRaw)
+          .neq('status', 'dropped')
+          .maybeSingle()
+        allowClass = !!en
+      }
+
+      if (allowClass) {
+        const { data: crow } = await userClient
+          .from('classes')
+          .select(
+            'course_code,title,schedule_time,location_label,location_lat,location_lng,semester:semesters(name,phase)',
+          )
+          .eq('id', classIdRaw)
+          .maybeSingle()
+        const row = crow as {
+          course_code: string
+          title: string
+          schedule_time: string
+          location_label: string | null
+          location_lat: number | null
+          location_lng: number | null
+          semester: { name: string; phase: string } | null
+        } | null
+        if (row) {
+          const locLine =
+            row.location_lat != null && row.location_lng != null
+              ? ` Map pin (WGS84): lat ${row.location_lat}, lng ${row.location_lng}. Human label: ${row.location_label ?? '(none)'}.`
+              : ' No map coordinates on file for this section.'
+          focusedClassContext = `\n\nFOCUSED CLASS:\n${row.course_code} — ${row.title}\nSchedule: ${row.schedule_time}\nSemester: ${row.semester?.name ?? '?'} (${row.semester?.phase ?? '?'}).${locLine}`
+        }
+      }
+    }
+
+    const noLocal =
+      !context.trim() && !instructorContext && !studentContext && !focusedClassContext.trim()
     const system = `You are College0, an AI assistant for a graduate college program.
 User role: ${role}. Profile status: ${profile?.status ?? 'unknown'}.
 Answer using the CONTEXT when relevant. If CONTEXT is empty, say you are inferring without local documents and keep answers conservative.
 CONTEXT:
-${context || '(none)'}${instructorContext}${studentContext}`
+${context || '(none)'}${instructorContext}${studentContext}${focusedClassContext}`
 
-    const answer = await chatComplete(openaiKey, [
-      { role: 'system', content: system },
-      { role: 'user', content: message },
-    ])
+    const answer = await geminiGenerateText({
+      apiKey: geminiKey,
+      systemInstruction: system,
+      userMessage: message,
+      temperature: 0.4,
+    })
 
     return corsJson({
       answer,

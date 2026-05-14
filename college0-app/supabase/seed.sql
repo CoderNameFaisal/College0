@@ -8,4 +8,4 @@ insert into public.taboo_words (word)
 values ('badword'), ('offensive')
 on conflict (word) do nothing;
 
--- RAG: insert document_embeddings via OpenAI embeddings (Edge script) — not included as raw SQL.
+-- RAG: document_embeddings use vector(768) + Gemini embedContent (see Edge / migration 20250513190000).

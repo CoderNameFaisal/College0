@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { formatClassSchedule, type ClassScheduleFields } from '../../lib/classSchedule'
 import type { EnrollmentStatus, GradeLetter, SemesterPhase } from '../../types/database'
+import { ClassLocationMap } from '../../components/ClassLocationMap'
+import { CourseGeminiPanel } from '../../components/CourseGeminiPanel'
 
-type ClassRow = {
+type ClassRow = ClassScheduleFields & {
   id: string
   course_code: string
   title: string
@@ -11,6 +14,9 @@ type ClassRow = {
   max_students: number
   avg_rating: number | null
   is_cancelled: boolean
+  location_lat: number | null
+  location_lng: number | null
+  location_label: string | null
   semester: { id: string; name: string; phase: SemesterPhase } | null
 }
 
@@ -41,7 +47,7 @@ export function InstructorClassesPage() {
       const { data: cs } = await supabase
         .from('classes')
         .select(
-          'id,course_code,title,schedule_time,max_students,avg_rating,is_cancelled,semester:semesters(id,name,phase)',
+          'id,course_code,title,schedule_time,course_start_date,course_end_date,meeting_days,period_start,period_end,max_students,avg_rating,is_cancelled,location_lat,location_lng,location_label,semester:semesters(id,name,phase)',
         )
         .eq('instructor_id', user.id)
         .order('course_code')
@@ -111,7 +117,7 @@ export function InstructorClassesPage() {
                   </div>
                   <div className="text-xs text-zinc-500">
                     {c.semester?.name} ({c.semester?.phase}) ·{' '}
-                    {formatTsRange(c.schedule_time)} · {enrolled.length}/{c.max_students} enrolled ·{' '}
+                    {formatClassSchedule(c)} · {enrolled.length}/{c.max_students} enrolled ·{' '}
                     {waitlisted.length} waitlisted · rating {c.avg_rating ?? '—'}
                     {c.is_cancelled && <span className="ml-2 text-red-300">cancelled</span>}
                   </div>
@@ -120,7 +126,17 @@ export function InstructorClassesPage() {
               </button>
 
               {isOpen && (
-                <div className="border-t border-zinc-800 p-4">
+                <div className="border-t border-zinc-800 p-4 space-y-3">
+                  {c.location_lat != null && c.location_lng != null && (
+                    <div className="max-w-md">
+                      <p className="text-xs font-medium text-zinc-400">Meeting location</p>
+                      {c.location_label && (
+                        <p className="text-sm text-zinc-300">{c.location_label}</p>
+                      )}
+                      <ClassLocationMap lat={c.location_lat} lng={c.location_lng} height={200} className="mt-1" />
+                    </div>
+                  )}
+                  <CourseGeminiPanel classId={c.id} courseCode={c.course_code} title={c.title} />
                   {rows.length === 0 ? (
                     <p className="text-sm text-zinc-500">No enrollments yet.</p>
                   ) : (
@@ -157,20 +173,4 @@ export function InstructorClassesPage() {
       </ul>
     </div>
   )
-}
-
-function formatTsRange(raw: string): string {
-  // Postgres tsrange comes back like `["2026-02-01 09:00:00","2026-02-01 10:30:00")`
-  // Best-effort short format; if parsing fails, just show raw.
-  const m = raw.match(/[[(]\s*"?([^,"]+)"?\s*,\s*"?([^,"]+)"?\s*[\])]/)
-  if (!m) return raw
-  try {
-    const a = new Date(m[1])
-    const b = new Date(m[2])
-    const date = a.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-    const t = (d: Date) => d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-    return `${date} ${t(a)}–${t(b)}`
-  } catch {
-    return raw
-  }
 }
