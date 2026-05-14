@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Team Y — Final System Report — College0</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: #cbd5e1;
+      --accent: #4f46e5;
+      --accent2: #0d9488;
+      --ok: #15803d;
+      --partial: #b45309;
+      --bad: #b91c1c;
+      --card: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.38;
+      color: var(--ink);
+      margin: 0;
+      background: #fff;
+    }
+    @page { size: A4; margin: 14mm 12mm; }
+    @media print {
+      .no-print { display: none !important; }
+      a { color: inherit; text-decoration: none; }
+      .page-break { break-before: page; page-break-before: always; }
+      h2 { break-after: avoid; }
+      tr { break-inside: avoid; }
+    }
+    .wrap { max-width: 190mm; margin: 0 auto; padding: 8mm 0; }
+    .cover {
+      text-align: center;
+      padding: 18mm 8mm 14mm;
+      background: linear-gradient(145deg, #312e81 0%, #1e1b4b 45%, #0f766e 100%);
+      color: #f1f5f9;
+      border-radius: 12px;
+      margin-bottom: 10mm;
+    }
+    .cover h1 { font-size: 22pt; font-weight: 700; margin: 0 0 4mm; letter-spacing: -0.02em; }
+    .cover .sub { font-size: 12pt; opacity: 0.92; margin-bottom: 8mm; }
+    .cover .team { font-size: 11pt; line-height: 1.6; }
+    .cover .due { margin-top: 8mm; font-size: 10pt; opacity: 0.85; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 5mm; }
+    h2 {
+      font-size: 12pt;
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 2mm;
+      margin: 7mm 0 4mm;
+    }
+    h3 { font-size: 10.5pt; margin: 4mm 0 2mm; color: #1e293b; }
+    p { margin: 0 0 3mm; }
+    ul { margin: 1mm 0 3mm; padding-left: 4.5mm; }
+    li { margin-bottom: 1.2mm; }
+    code, .mono { font-family: 'JetBrains Mono', monospace; font-size: 9pt; background: #f1f5f9; padding: 0.1em 0.35em; border-radius: 3px; }
+    .callout {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      padding: 3mm 4mm;
+      border-radius: 0 8px 8px 0;
+      margin: 3mm 0;
+    }
+    table.spec {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.2pt;
+      margin: 2mm 0 4mm;
+    }
+    table.spec th, table.spec td {
+      border: 1px solid var(--line);
+      padding: 2mm 2.2mm;
+      vertical-align: top;
+    }
+    table.spec th { background: #e2e8f0; text-align: left; font-weight: 600; }
+    .st-finished { background: #dcfce7; color: #14532d; font-weight: 600; text-align: center; width: 14%; }
+    .st-partial { background: #ffedd5; color: #7c2d12; font-weight: 600; text-align: center; }
+    .st-na { background: #f1f5f9; text-align: center; }
+    .contrib { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 2mm 0; }
+    .contrib th, .contrib td { border: 1px solid var(--line); padding: 2.5mm; }
+    .contrib th { background: #e0e7ff; }
+    .sig { margin-top: 6mm; border-top: 1px dashed var(--line); padding-top: 3mm; font-size: 9pt; color: var(--muted); }
+    .sig-row { display: flex; justify-content: space-between; gap: 4mm; flex-wrap: wrap; margin-top: 4mm; }
+    .sig-box { flex: 1; min-width: 38mm; border-bottom: 1px solid var(--ink); padding-bottom: 6mm; font-size: 8.5pt; }
+    .diagram {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 3mm;
+      margin: 3mm 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.2pt;
+      line-height: 1.35;
+      white-space: pre;
+      overflow: hidden;
+    }
+    .viz {
+      display: flex;
+      align-items: flex-end;
+      gap: 3mm;
+      height: 28mm;
+      padding: 2mm 0 0;
+      margin: 2mm 0 4mm;
+    }
+    .bar {
+      flex: 1;
+      background: linear-gradient(180deg, #818cf8 0%, #4f46e5 100%);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      min-height: 4mm;
+    }
+    .bar span {
+      position: absolute;
+      bottom: -5mm;
+      left: 0; right: 0;
+      text-align: center;
+      font-size: 7.5pt;
+      color: var(--muted);
+    }
+    .bar.b2 { height: 88%; }
+    .bar.b3 { height: 72%; }
+    .bar.b4 { height: 65%; }
+    .bar.b5 { height: 58%; }
+    .bar.b6 { height: 52%; }
+    .bar.b7 { height: 48%; }
+    .bar.b8 { height: 45%; }
+    .bar.b9 { height: 42%; }
+    .bar.b10 { height: 40%; }
+    .viz-title { font-size: 8.5pt; color: var(--muted); margin-bottom: 1mm; }
+    .no-print { margin: 4mm 0; padding: 3mm; background: #fef3c7; border-radius: 8px; font-size: 9pt; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="no-print">
+      <strong>Print to PDF:</strong> Use your browser → Print → Destination “Save as PDF”, margins Default, 
+      <strong>Background graphics</strong> on. Target ≤ 9 pages (A4). This file is standalone (no app build required).
+    </div>
+
+    <header class="cover">
+      <h1>Final System Report</h1>
+      <p class="sub">College0 — Web-based graduate program management</p>
+      <p class="team"><strong>Team Y</strong><br />
+        Atai Kydyrov · Syed Mahmood · Abdullah Zidan · Justin Jones</p>
+      <p class="due"><strong>Due:</strong> 11:59 pm on demo day — <strong>May 14</strong> (per course instructions)</p>
+    </header>
+
+    <section>
+      <h2>1. Introduction</h2>
+      <p>
+        <strong>College0</strong> is a full-stack academic operations system: visitors explore public statistics and apply for admission;
+        registrars advance semester phases, define classes, resolve applications and complaints; students enroll under capacity and
+        conflict rules, write reviews, use AI assistance scoped to their enrollments; instructors manage waitlists, grade, and file complaints.
+        The implementation centers on <strong>Supabase</strong> (PostgreSQL with row-level security, Auth, Edge Functions, <code>pgvector</code>)
+        plus a <strong>React 19</strong> single-page app built with <strong>TypeScript</strong>, <strong>Vite</strong>, <strong>Tailwind CSS v4</strong>,
+        and <strong>React Router v7</strong>. Optional hosting uses <strong>Vercel</strong> for the static frontend; database and server logic remain on Supabase.
+      </p>
+      <div class="callout">
+        <strong>Install &amp; run from scratch</strong>
+        <ol style="margin:2mm 0 0; padding-left:4mm;">
+          <li>Clone the repository (see §4). Open <span class="mono">college0-app/</span>.</li>
+          <li><code>npm install</code> then copy <span class="mono">.env.example</span> → <span class="mono">.env</span> and set <span class="mono">VITE_SUPABASE_URL</span>, <span class="mono">VITE_SUPABASE_ANON_KEY</span>.</li>
+          <li>Create a Supabase project; enable <strong>uuid-ossp</strong> and <strong>vector</strong>. Apply SQL migrations in <span class="mono">college0-app/supabase/migrations/</span> in filename order (see root <span class="mono">README.md</span>).</li>
+          <li>Add <span class="mono">SUPABASE_SERVICE_ROLE_KEY</span> to <span class="mono">.env</span>; run <code>npm run seed:registrar</code> for the first registrar account (or create a user in the Dashboard with metadata <span class="mono">role: registrar</span>).</li>
+          <li>Deploy Edge Functions from <span class="mono">college0-app/</span> with the Supabase CLI; set secrets <span class="mono">GEMINI_API_KEY</span>, etc., per README.</li>
+          <li><code>npm run dev</code> — SPA at localhost. Production: connect the GitHub repo to Vercel with root <span class="mono">college0-app</span>.</li>
+        </ol>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <section>
+      <h2>2. Spec correspondence (1–10)</h2>
+      <p class="viz-title" style="margin-top:0">Relative emphasis of implemented areas (illustrative)</p>
+      <div class="viz">
+        <div class="bar b2" style="height:95%"><span>#1 GUI</span></div>
+        <div class="bar b2" style="height:92%"><span>#2 Apps</span></div>
+        <div class="bar b3" style="height:88%"><span>#3 Term</span></div>
+        <div class="bar b4" style="height:85%"><span>#4 Run</span></div>
+        <div class="bar b5" style="height:80%"><span>#5 Rev</span></div>
+        <div class="bar b6" style="height:76%"><span>#6 Grade</span></div>
+        <div class="bar b7" style="height:72%"><span>#7 Cmp</span></div>
+        <div class="bar b8" style="height:68%"><span>#8 Dash</span></div>
+        <div class="bar b9" style="height:64%"><span>#9 AI</span></div>
+        <div class="bar b10" style="height:60%"><span>#10+</span></div>
+      </div>
+      <table class="spec">
+        <thead>
+          <tr>
+            <th style="width:4%">#</th>
+            <th style="width:42%">Required feature (summary)</th>
+            <th style="width:12%">Status</th>
+            <th style="width:42%">How it is implemented (concise)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Public GUI: intro, highest/lowest rated classes, top GPA students.</td>
+            <td class="st-finished">Finished</td>
+            <td><span class="mono">PublicDashboard</span> loads view <span class="mono">v_public_dashboard_stats</span> (top/bottom classes by <span class="mono">avg_rating</span>, top GPA students). Home copy introduces the program. Anonymous display for leaderboard where appropriate.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Visitor student/instructor applications; registrar accept/reject; auto-accept GPA &amp; quota; justification on override; credentials for accepted students.</td>
+            <td class="st-finished">Finished</td>
+            <td>Visitor forms insert <span class="mono">applications</span>. Registrar UI + <span class="mono">rpc_decide_application</span> (reject) and Edge <span class="mono">accept-student-application</span> (accept, creates Auth user, <span class="mono">student_id</span>, temp password). Auto-accept uses <strong>operational semester</strong> quota and <strong>prior GPA ≥ 3.0</strong> (implementation uses inclusive 3.0 and phases registration|running|grading). Instructor accept via same Edge path. <span class="mono">FirstLoginPage</span> forces password change when <span class="mono">first_login</span>.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Four semester periods; setup classes/time/instructor/size; registration 2–4 courses; conflicts; capacity/waitlist; instructor promotes; retake after F.</td>
+            <td class="st-finished">Finished</td>
+            <td><span class="mono">rpc_transition_semester_phase</span>; registrar class form + calendar fields; <span class="mono">rpc_enroll_in_class</span> enforces phase, capacity (waitlist), schedule overlap, retake-on-F; <span class="mono">rpc_promote_waitlist</span> / <span class="mono">rpc_reject_waitlist</span>.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Running: no registration except special window; &lt;2 courses warning; &lt;3 students cancel class; special registration; instructor warnings; all-cancelled suspend.</td>
+            <td class="st-finished">Finished</td>
+            <td>Triggers/RPCs: under-enrollment warnings; <span class="mono">rpc_course_cancellation_scan</span> (running phase only) cancels class, drops enrollments, flags <span class="mono">special_registration_eligible</span>, student warnings, instructor warning; suspension when all classes cancelled. Student enroll page respects special flag.</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Reviews with stars; anonymous to instructor; avg &lt;2 instructor warning; 3 warnings suspend; lock after grade; taboo 1–2 masked +1 warn; ≥3 hidden +2 warns.</td>
+            <td class="st-finished">Finished</td>
+            <td>Edge <span class="mono">submit-review</span> + <span class="mono">reviews</span> RLS; <span class="mono">recalc_class_avg_rating</span> excludes hidden; <span class="mono">classes_after_low_avg_rating_warn</span>; instructor-facing queries omit author; <span class="mono">rpc_post_grade</span> locks reviews; taboo counts from registrar list with masking and warnings per policy.</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Grading period grades; missing-grade warnings; class GPA band registrar scrutiny; student GPA termination rules; honor roll; graduation application.</td>
+            <td class="st-partial">Partial</td>
+            <td>Grades via <span class="mono">rpc_post_grade</span> + phase enforcement; post–grading-period missing-grade warnings; low/high class average instructor warnings; profile triggers for GPA &lt;2, double-F, 2–2.25 interview warning; honors counters and <span class="mono">rpc_redeem_honor_for_warning</span>; graduation workflow with registrar decision. <em>Gap:</em> “Registrar questions / fire instructor” for GPA band is reflected as <strong>warnings/flags in UI</strong> rather than a dedicated formal hearing workflow.</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Complaints student↔registrar, instructor↔registrar; registrar resolution; 3 warnings suspend + fine.</td>
+            <td class="st-finished">Finished</td>
+            <td><span class="mono">complaints</span> + <span class="mono">rpc_resolve_complaint</span>; fines table and automation per migrations; suspension on warning thresholds.</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>Role dashboards: instructor roster/academic info; student own records + tutorial; registrar sees all.</td>
+            <td class="st-finished">Finished</td>
+            <td>Layouts under <span class="mono">/instructor</span>, <span class="mono">/student</span>, <span class="mono">/registrar</span>; RLS scopes data; first-login tutorial; instructor grading/complaints include roster student fields where policy allows.</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>AI with local vector store + LLM fallback; role-scoped context; hallucination notice.</td>
+            <td class="st-finished">Finished</td>
+            <td>Edge <span class="mono">ai-chat</span>: <span class="mono">match_documents</span> on <span class="mono">document_embeddings</span> (768-d Gemini), then Gemini generate; prompts include visitor/student/instructor context blocks; UI warns about hallucinations when using general model answers.</td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td>Creative enrichment.</td>
+            <td class="st-finished">Finished</td>
+            <td><strong>(a)</strong> Public <strong>course map</strong> (<span class="mono">/class-locations</span>) with Leaflet/OSM pins from <span class="mono">classes.location_lat/lng/label</span>; registrar required pin+label on create + <span class="mono">rpc_set_class_location</span> for edits. <strong>(b)</strong> <span class="mono">study-groups</span> Edge function. <strong>(c)</strong> Directory / visitor-safe enrollment views where specified.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="page-break"></div>
+
+    <section>
+      <h2>3. Team contributions &amp; grading template</h2>
+      <p>
+        The table below records <strong>equal baseline contribution (25% each)</strong> for a four-person team, with no bonus or penalty applied
+        in this submitted version. Per course policy, any non-equal split, bonus (max +10% total reallocated), or penalty must be agreed in writing
+        by all members — use the signature blocks.
+      </p>
+      <table class="contrib">
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Primary contributions (examples)</th>
+            <th>Suggested %</th>
+            <th>Bonus</th>
+            <th>Penalty</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Atai Kydyrov</td>
+            <td>Supabase linkage, deployments (Vercel/Edge), environment &amp; tooling, integration QA.</td>
+            <td>25%</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Syed Mahmood</td>
+            <td>Backend migrations/RPC review flows, auth &amp; application acceptance paths, data integrity checks.</td>
+            <td>25%</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Abdullah Zidan</td>
+            <td>Registrar &amp; student UX, enrollment and semester flows, spec-to-UI traceability.</td>
+            <td>25%</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Justin Jones</td>
+            <td>Instructor features, grading and roster surfaces, complaints and reviews UX.</td>
+            <td>25%</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="sig">
+        <strong>Signatures</strong> (required if percentages differ from equal split or if bonus/penalty is applied):
+        <div class="sig-row">
+          <div class="sig-box">Atai Kydyrov — date: __________</div>
+          <div class="sig-box">Syed Mahmood — date: __________</div>
+          <div class="sig-box">Abdullah Zidan — date: __________</div>
+          <div class="sig-box">Justin Jones — date: __________</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>4. Git repository</h2>
+      <p><strong>Clone URL (HTTPS):</strong></p>
+      <p class="mono" style="font-size:10pt; word-break:break-all;">https://github.com/CoderNameFaisal/College0.git</p>
+      <p class="callout">
+        <strong>Visibility:</strong> Ensure this repository is set to <strong>Public</strong> (or grant the instructor access) so it can be cloned for grading.
+        Application source lives under <span class="mono">college0-app/</span>; database migrations under <span class="mono">college0-app/supabase/migrations/</span>.
+      </p>
+    </section>
+
+    <div class="page-break"></div>
+
+    <section>
+      <h2>5. Database schema (core)</h2>
+      <p>
+        PostgreSQL schema <span class="mono">public</span> is defined incrementally by ordered migrations. Auth identities live in <span class="mono">auth.users</span>;
+        <span class="mono">public.profiles</span> mirrors each user with <span class="mono">role</span>, academic fields, and status. Below is a logical ER sketch of principal entities and foreign keys.
+      </p>
+      <div class="diagram">auth.users (id)
+    │ 1:1
+    ▼
+profiles (id PK/FK, role, full_name, student_id, status, cumulative_gpa, …)
+    │
+    ├──< semesters (id) ──< classes (id, semester_id, instructor_id→profiles,
+    │                      course_code, title, schedule_time, max_students,
+    │                      avg_rating, is_cancelled, location_lat/lng/label, …)
+    │         │
+    │         └──< enrollments (id, student_id→profiles, class_id→classes,
+    │                          status, grade, semester_id, …)
+    │
+    ├──< applications (visitor/instructor pipeline)
+    ├──< reviews (class_id, author_id, stars, body, filtered_body, is_hidden)
+    ├──< warnings (target_id, reason, semester_id, …)
+    ├──< complaints (filed_by, against, …)
+    ├──< graduation_applications
+    ├──< study_groups
+    ├──< taboo_words
+    ├──< fines
+    ├──< document_embeddings (content, embedding vector(768), …)
+    └──< audit_log, required_courses, student_semester_honors, …</div>
+      <h3>Security model</h3>
+      <p>
+        Row Level Security (RLS) policies on tables such as <span class="mono">profiles</span>, <span class="mono">classes</span>, <span class="mono">enrollments</span>,
+        <span class="mono">reviews</span>, and <span class="mono">complaints</span> enforce role-based access; sensitive operations (phase transitions, scans, grade posting, etc.)
+        are additionally guarded by <span class="mono">SECURITY DEFINER</span> RPCs checking <span class="mono">_current_role()</span>.
+      </p>
+    </section>
+
+    <section>
+      <h2>6. Closing</h2>
+      <p>
+        College0 satisfies the majority of the written specification through a combination of Postgres constraints/triggers, explicit RPCs, Edge Functions for Auth-adjacent workflows and AI,
+        and a role-organized React client. Items called out as <strong>partial</strong> above should be reviewed first in any future sprint.
+      </p>
+      <p style="font-size:9pt;color:var(--muted);margin-top:6mm;">
+        Report generated as static HTML for Team Y — print to PDF for submission. Not part of the production bundle.
+      </p>
+    </section>
+  </div>
+</body>
+</html>
