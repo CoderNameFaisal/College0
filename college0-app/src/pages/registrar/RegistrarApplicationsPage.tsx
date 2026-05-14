@@ -156,7 +156,7 @@ export function RegistrarApplicationsPage() {
         email?: string
         temp_password?: string
         full_name?: string
-      }>('accept-instructor-application', {
+      }>('accept-student-application', {
         application_id: a.id,
         full_name: d.fullName.trim() || null,
       })

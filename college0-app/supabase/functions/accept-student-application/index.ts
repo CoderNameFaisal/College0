@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import { corsJson, handleCors } from '../_shared/cors.ts'
 
 Deno.serve(async (req) => {
@@ -49,11 +49,13 @@ Deno.serve(async (req) => {
       .maybeSingle()
     if (appErr || !app) return corsJson({ error: 'Application not found' }, 404)
     if (app.status !== 'pending') return corsJson({ error: 'Application already decided' }, 400)
+
+    if (app.role_requested === 'instructor') {
+      return await acceptInstructorApplication(admin, app, user.id, fullNameOverride)
+    }
+
     if (app.role_requested !== 'student') {
-      return corsJson(
-        { error: 'Use rpc_decide_application for instructor applications' },
-        400,
-      )
+      return corsJson({ error: 'Unsupported application type' }, 400)
     }
 
     const { data: sem } = await admin
@@ -125,6 +127,63 @@ Deno.serve(async (req) => {
     return corsJson({ error: String(e) }, 500)
   }
 })
+
+async function acceptInstructorApplication(
+  admin: SupabaseClient,
+  app: {
+    id: string
+    applicant_email: string
+    applicant_name: string | null
+    role_requested: string
+    prior_gpa: number | null
+    status: string
+  },
+  registrarId: string,
+  fullNameOverride: string,
+) {
+  const tempPassword = generateTempPassword()
+  const fullName =
+    fullNameOverride ||
+    (app.applicant_name as string | null)?.trim() ||
+    app.applicant_email.split('@')[0]
+
+  const { data: createRes, error: createErr } = await admin.auth.admin.createUser({
+    email: app.applicant_email,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: { full_name: fullName, role: 'instructor' },
+  })
+  if (createErr || !createRes.user) {
+    const msg = createErr?.message ?? 'unknown'
+    if (/already|registered|exists/i.test(msg)) {
+      return corsJson(
+        {
+          error:
+            `Auth user may already exist for ${app.applicant_email}. Remove the duplicate in Dashboard → Authentication, or have them sign in.`,
+        },
+        409,
+      )
+    }
+    return corsJson({ error: `Failed to create user: ${msg}` }, 500)
+  }
+
+  await admin
+    .from('applications')
+    .update({
+      status: 'accepted',
+      rejection_reason: null,
+      reviewed_by: registrarId,
+    })
+    .eq('id', app.id)
+
+  return corsJson({
+    ok: true,
+    user_id: createRes.user.id,
+    email: app.applicant_email,
+    temp_password: tempPassword,
+    full_name: fullName,
+  })
+}
 
 function generateTempPassword(): string {
   const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'

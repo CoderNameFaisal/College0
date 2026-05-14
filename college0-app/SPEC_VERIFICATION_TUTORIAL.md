@@ -78,8 +78,8 @@ This document maps the **course project specification** (numbered requirements 1
 ### 2.5 Instructor application (registrar free choice; no GPA/quota justification rule)
 
 1. Visitor submits **`/apply/instructor`**.
-2. Registrar opens **`/registrar/applications`**, uses **Accept instructor** (RPC `rpc_decide_application`).
-3. **Pass:** Application status becomes accepted; message explains creating Auth user in **Supabase Dashboard** with metadata `role: instructor` (no in-app sign-up page).
+2. Registrar opens **`/registrar/applications`**, uses **Accept instructor** (Edge Function **`accept-student-application`** — same deploy as student accept; creates Auth user + instructor profile).
+3. **Pass:** Application status becomes accepted; UI shows **temporary password**; instructor can sign in (no manual Dashboard user creation).
 4. After Auth user exists, registrar assigns classes from **Registrar → Instructors** → detail page.
 
 ---

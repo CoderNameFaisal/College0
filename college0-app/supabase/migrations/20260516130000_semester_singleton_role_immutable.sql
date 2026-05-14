@@ -162,7 +162,7 @@ begin
   end if;
 
   if app.role_requested = 'instructor'::app_role_requested and p_status = 'accepted'::app_status then
-    raise exception 'Instructor acceptance creates an auth user via the accept-instructor-application Edge Function. Use the Registrar UI Accept button.';
+    raise exception 'Instructor acceptance must use the accept-student-application Edge Function (Registrar → Applications → Accept). Do not call rpc_decide_application with status accepted for instructor rows.';
   end if;
 
   if app.role_requested = 'student'::app_role_requested then

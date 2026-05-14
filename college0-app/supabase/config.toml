@@ -413,5 +413,5 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [functions.ai-chat]
 verify_jwt = false
 
-[functions.accept-instructor-application]
+[functions.accept-student-application]
 verify_jwt = false
