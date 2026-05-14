@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { fetchOperationalSemester } from '../../lib/operationalSemester'
 import { invokeEdgeSession } from '../../lib/invokeEdge'
 import type { AppRoleRequested, AppStatus } from '../../types/database'
 
@@ -54,15 +55,9 @@ export function RegistrarApplicationsPage() {
         'id,applicant_email,applicant_name,qualifications,role_requested,prior_gpa,status,rejection_reason,created_at',
       )
       .order('created_at', { ascending: false })
-    const [apps, sem, studentsCount] = await Promise.all([
+    const [apps, opSem, studentsCount] = await Promise.all([
       showDecided ? q : q.eq('status', 'pending'),
-      supabase
-        .from('semesters')
-        .select('quota,phase')
-        .eq('phase', 'registration')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
+      fetchOperationalSemester(supabase),
       supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })
@@ -70,7 +65,7 @@ export function RegistrarApplicationsPage() {
         .eq('status', 'active'),
     ])
     setRows((apps.data as AppRow[]) ?? [])
-    setQuota(sem.data?.quota ?? null)
+    setQuota(opSem?.quota ?? null)
     setActiveStudents(studentsCount.count ?? 0)
     setLoading(false)
   }, [showDecided])
@@ -91,7 +86,7 @@ export function RegistrarApplicationsPage() {
     return (
       a.role_requested === 'student' &&
       a.prior_gpa !== null &&
-      a.prior_gpa > 3.0 &&
+      a.prior_gpa >= 3.0 &&
       quota !== null &&
       activeStudents < quota
     )
@@ -189,10 +184,11 @@ export function RegistrarApplicationsPage() {
 
       <div className="rounded border border-zinc-800 bg-zinc-900/40 p-3 text-xs text-zinc-400">
         Active student quota: <span className="text-white">{activeStudents}</span> of{' '}
-        <span className="text-white">{quota ?? '—'}</span> filled.
-        {' '}Rule: GPA &gt; 3.0 + quota available → must accept (justification needed to override either
-        way). Accepting creates an account and shows a <strong>temporary password</strong> here — share
-        it with the student securely (this app does not email it). Rejecting does not create an account.
+        <span className="text-white">{quota ?? '—'}</span> filled (operational semester: registration,
+        running, or grading).
+        {' '}Rule: prior GPA ≥ 3.0 + quota available → must accept (justification needed to override either
+        way). Accepting creates or links an Auth account and shows a <strong>temporary password</strong>{' '}
+        here — share it securely (this app does not email it). Rejecting does not create an account.
       </div>
 
       {msg && <p className="text-sm text-amber-300">{msg}</p>}

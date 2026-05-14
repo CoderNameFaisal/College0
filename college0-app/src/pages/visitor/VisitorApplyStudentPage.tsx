@@ -59,8 +59,9 @@ export function VisitorApplyStudentPage() {
       <div>
         <h1 className="text-2xl font-semibold text-white">Apply as a student</h1>
         <p className="text-sm text-zinc-400">
-          The registrar reviews every application. If your prior GPA is above 3.0 and there is
-          room in the program, you'll be accepted automatically.
+          The registrar reviews every application. If your prior GPA is <strong>3.0 or higher</strong> and
+          active students are below the current term quota (registration, running, or grading phase), you
+          must be accepted unless the registrar documents an override.
         </p>
       </div>
 
