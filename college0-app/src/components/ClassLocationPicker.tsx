@@ -80,9 +80,10 @@ export function ClassLocationPicker({ lat, lng, onChange, label, onLabelChange }
 
   return (
     <div className="space-y-2 md:col-span-2">
-      <span className="text-xs text-zinc-500">Meeting location (map — OpenStreetMap)</span>
+      <span className="text-xs text-zinc-500">Meeting location (map — required for new sections)</span>
       <p className="text-[11px] text-zinc-500">
-        Click the map to drop a pin (drag to adjust). One pin applies to all meeting days for this section.
+        Click the map to drop a pin (drag to adjust). Add a building/room label below — both are saved to the
+        database for the public course map and class cards.
       </p>
       <div ref={ref} className="h-[220px] w-full overflow-hidden rounded border border-zinc-700" />
       <label className="block space-y-1">

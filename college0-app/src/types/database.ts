@@ -240,6 +240,10 @@ export type Database = {
       rpc_transition_semester_phase: { Args: { p_semester_id: string; p_next_phase: SemesterPhase }; Returns: string }
       rpc_delete_semester: { Args: { p_semester_id: string }; Returns: string }
       rpc_course_cancellation_scan: { Args: Record<string, never>; Returns: unknown }
+      rpc_set_class_location: {
+        Args: { p_class_id: string; p_lat: number; p_lng: number; p_label: string }
+        Returns: string
+      }
       rpc_enroll_in_class: { Args: { p_class_id: string }; Returns: string }
       rpc_post_grade: { Args: { p_enrollment_id: string; p_grade: GradeLetter }; Returns: string }
       rpc_warn_user: { Args: { p_target_id: string; p_reason: string }; Returns: string }
