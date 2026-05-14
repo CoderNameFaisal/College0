@@ -20,7 +20,8 @@ export function ClassLocationMap({ lat, lng, zoom = 16, className = '', height =
     ensureLeafletDefaultIcons()
     if (!ref.current) return
 
-    const map = L.map(ref.current, {
+    const el = ref.current
+    const map = L.map(el, {
       scrollWheelZoom: false,
       attributionControl: true,
     }).setView([lat, lng], zoom)
@@ -32,6 +33,12 @@ export function ClassLocationMap({ lat, lng, zoom = 16, className = '', height =
 
     L.marker([lat, lng]).addTo(map)
     mapRef.current = map
+
+    const fixLayout = () => {
+      map.invalidateSize()
+      map.setView([lat, lng], zoom)
+    }
+    requestAnimationFrame(fixLayout)
 
     return () => {
       map.remove()

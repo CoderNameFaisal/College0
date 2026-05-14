@@ -77,8 +77,15 @@ export function AccountPage() {
     <div className="mx-auto max-w-lg space-y-8">
         <div>
           <h1 className="font-serif text-2xl font-semibold text-white">Account</h1>
-          <p className="mt-1 text-sm text-zinc-400">Update your profile and sign-in password.</p>
-        </div>
+        <p className="mt-1 text-sm text-zinc-400">Update your profile and sign-in password.</p>
+        {profile && (
+          <p className="mt-2 text-xs text-zinc-500">
+            <span className="text-zinc-400">Your role</span> is{' '}
+            <span className="font-medium capitalize text-zinc-300">{profile.role}</span> — it is set when
+            your account is created and cannot be changed here.
+          </p>
+        )}
+      </div>
 
         {msg && <p className="rounded-lg border border-emerald-800/50 bg-emerald-950/40 px-3 py-2 text-sm text-emerald-200">{msg}</p>}
         {err && <p className="rounded-lg border border-red-800/50 bg-red-950/40 px-3 py-2 text-sm text-red-300">{err}</p>}
@@ -89,14 +96,6 @@ export function AccountPage() {
             <label className="block text-sm">
               <span className="text-zinc-400">Email</span>
               <input className={`${input} mt-1 bg-zinc-950/80 text-zinc-500`} readOnly value={user?.email ?? ''} />
-            </label>
-            <label className="block text-sm">
-              <span className="text-zinc-400">Role</span>
-              <input
-                className={`${input} mt-1 bg-zinc-950/80 capitalize text-zinc-500`}
-                readOnly
-                value={profile?.role ?? ''}
-              />
             </label>
             <label className="block text-sm">
               <span className="text-zinc-400">Full name</span>

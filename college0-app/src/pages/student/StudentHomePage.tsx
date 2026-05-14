@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { fetchOperationalSemester } from '../../lib/operationalSemester'
 import type { EnrollmentStatus, GradeLetter, SemesterPhase } from '../../types/database'
 
 type SemesterRow = {
@@ -55,15 +56,8 @@ export function StudentHomePage() {
     let cancelled = false
     async function load() {
       if (!user) return
-      const { data: sem } = await supabase
-        .from('semesters')
-        .select('id,name,phase')
-        .neq('phase', 'closed')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      const semRow = (await fetchOperationalSemester(supabase)) as SemesterRow | null
       if (cancelled) return
-      const semRow = sem as SemesterRow | null
       setSemester(semRow)
 
       const [cur, passing, comp, grad] = await Promise.all([

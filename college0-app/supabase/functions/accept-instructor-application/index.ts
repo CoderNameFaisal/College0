@@ -29,13 +29,11 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .single()
     if (profile?.role !== 'registrar') {
-      return corsJson({ error: 'Only registrars may accept applications' }, 403)
+      return corsJson({ error: 'Only registrars may accept instructor applications' }, 403)
     }
 
     const body = await req.json()
     const application_id = body.application_id as string | undefined
-    const justification =
-      typeof body.justification === 'string' ? (body.justification as string) : null
     const fullNameOverride =
       typeof body.full_name === 'string' ? (body.full_name as string).trim() : ''
     if (!application_id) return corsJson({ error: 'application_id required' }, 400)
@@ -44,82 +42,56 @@ Deno.serve(async (req) => {
 
     const { data: app, error: appErr } = await admin
       .from('applications')
-      .select('id,applicant_email,applicant_name,role_requested,prior_gpa,status')
+      .select('id,applicant_email,applicant_name,role_requested,status')
       .eq('id', application_id)
       .maybeSingle()
     if (appErr || !app) return corsJson({ error: 'Application not found' }, 404)
     if (app.status !== 'pending') return corsJson({ error: 'Application already decided' }, 400)
-    if (app.role_requested !== 'student') {
-      return corsJson(
-        { error: 'Use rpc_decide_application for instructor applications' },
-        400,
-      )
+    if (app.role_requested !== 'instructor') {
+      return corsJson({ error: 'Not an instructor application' }, 400)
     }
 
-    const { data: sem } = await admin
-      .from('semesters')
-      .select('id,quota,phase')
-      .eq('phase', 'registration')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (sem) {
-      const { count: activeStudents } = await admin
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'student')
-        .eq('status', 'active')
-      const mustAccept =
-        app.prior_gpa !== null && app.prior_gpa > 3.0 && (activeStudents ?? 0) < sem.quota
-      if (!mustAccept && !justification?.trim()) {
-        return corsJson(
-          {
-            error:
-              'Justification required to accept an applicant who does not meet the auto-accept rule (GPA > 3.0 and quota available)',
-          },
-          400,
-        )
-      }
-    }
-
-    const studentId = `S-${Math.floor(100000 + Math.random() * 900000)}`
     const tempPassword = generateTempPassword()
     const fullName =
       fullNameOverride ||
-      (app.applicant_name as string | null) ||
+      (app.applicant_name as string | null)?.trim() ||
       app.applicant_email.split('@')[0]
 
     const { data: createRes, error: createErr } = await admin.auth.admin.createUser({
       email: app.applicant_email,
       password: tempPassword,
       email_confirm: true,
-      user_metadata: { full_name: fullName, role: 'student' },
+      user_metadata: { full_name: fullName, role: 'instructor' },
     })
     if (createErr || !createRes.user) {
-      return corsJson(
-        { error: `Failed to create user: ${createErr?.message ?? 'unknown'}` },
-        500,
-      )
+      const msg = createErr?.message ?? 'unknown'
+      if (/already|registered|exists/i.test(msg)) {
+        return corsJson(
+          {
+            error:
+              `Auth user may already exist for ${app.applicant_email}. Remove the duplicate in Dashboard → Authentication, or have them sign in.`,
+          },
+          409,
+        )
+      }
+      return corsJson({ error: `Failed to create user: ${msg}` }, 500)
     }
-
-    await admin.from('profiles').update({ student_id: studentId }).eq('id', createRes.user.id)
 
     await admin
       .from('applications')
       .update({
         status: 'accepted',
-        rejection_reason: justification,
+        rejection_reason: null,
         reviewed_by: user.id,
       })
       .eq('id', application_id)
 
     return corsJson({
       ok: true,
-      student_id: studentId,
-      temp_password: tempPassword,
       user_id: createRes.user.id,
       email: app.applicant_email,
+      temp_password: tempPassword,
+      full_name: fullName,
     })
   } catch (e) {
     return corsJson({ error: String(e) }, 500)

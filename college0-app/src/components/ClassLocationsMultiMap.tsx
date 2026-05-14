@@ -40,6 +40,8 @@ export function ClassLocationsMultiMap({ pins, height = 280, className = '' }: P
     mapRef.current = map
     groupRef.current = group
 
+    requestAnimationFrame(() => map.invalidateSize())
+
     return () => {
       map.remove()
       mapRef.current = null
@@ -72,6 +74,9 @@ export function ClassLocationsMultiMap({ pins, height = 280, className = '' }: P
     } else {
       map.fitBounds(L.latLngBounds(latLngs as L.LatLngTuple[]), { padding: [28, 28], maxZoom: 16 })
     }
+    requestAnimationFrame(() => {
+      map.invalidateSize()
+    })
   }, [pins])
 
   return (

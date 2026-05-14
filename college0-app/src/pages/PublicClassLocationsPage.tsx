@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { ClassLocationsMultiMap, type ClassMapPin } from '../components/ClassLocationsMultiMap'
+import { fetchOperationalSemester } from '../lib/operationalSemester'
 
 type SemesterRow = { id: string; name: string; phase: string }
 
@@ -12,16 +13,9 @@ export function PublicClassLocationsPage() {
   useEffect(() => {
     let cancelled = false
     async function load() {
-      const { data: sem } = await supabase
-        .from('semesters')
-        .select('id,name,phase')
-        .neq('phase', 'closed')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      const semRow = (await fetchOperationalSemester(supabase)) as SemesterRow | null
 
       if (cancelled) return
-      const semRow = sem as SemesterRow | null
       setSemester(semRow)
 
       if (!semRow) {
@@ -70,14 +64,18 @@ export function PublicClassLocationsPage() {
       <div>
         <h1 className="text-2xl font-semibold text-white">Course locations</h1>
         <p className="text-sm text-zinc-500">
-          Map of meeting pins for the current open semester (OpenStreetMap). No account required.
+          Map of meeting pins for the semester in registration, running, or grading (OpenStreetMap). No
+          account required.
         </p>
       </div>
 
       {loading ? (
         <p className="text-sm text-zinc-500">Loading…</p>
       ) : !semester ? (
-        <p className="text-sm text-zinc-500">No active semester right now.</p>
+        <p className="text-sm text-zinc-500">
+          No semester is in registration, running, or grading — there is nothing to map for students
+          yet.
+        </p>
       ) : (
         <>
           <p className="text-xs text-zinc-500">

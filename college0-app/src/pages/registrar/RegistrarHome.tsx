@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { fetchOperationalSemester } from '../../lib/operationalSemester'
 
 type Stats = {
   pendingApplications: number
@@ -43,13 +44,7 @@ export function RegistrarHome() {
           .select('id', { count: 'exact', head: true })
           .eq('status', 'pending'),
         supabase.from('profiles').select('role,status,cumulative_gpa'),
-        supabase
-          .from('semesters')
-          .select('name,phase')
-          .neq('phase', 'closed')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
+        fetchOperationalSemester(supabase),
       ])
 
       const profileRows = (profiles.data ?? []) as {
@@ -74,8 +69,8 @@ export function RegistrarHome() {
             p.cumulative_gpa >= 2.0 &&
             p.cumulative_gpa < 2.25,
         ).length,
-        currentPhase: semester.data?.phase ?? null,
-        currentSemester: semester.data?.name ?? null,
+        currentPhase: semester?.phase ?? null,
+        currentSemester: semester?.name ?? null,
       }
 
       if (!cancelled) {
@@ -96,7 +91,7 @@ export function RegistrarHome() {
         <p className="text-sm text-zinc-400">
           {stats.currentSemester
             ? `Current semester: ${stats.currentSemester} (${stats.currentPhase})`
-            : 'No active semester. Create one under Semester management.'}
+            : 'No semester in registration, running, or grading. Create or advance one under Semester management.'}
         </p>
       </div>
 

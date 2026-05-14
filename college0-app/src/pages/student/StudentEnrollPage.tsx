@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { fetchOperationalSemester } from '../../lib/operationalSemester'
 import { formatClassSchedule, schedulesOverlap, type ClassScheduleFields } from '../../lib/classSchedule'
 import type { EnrollmentStatus, GradeLetter, SemesterPhase } from '../../types/database'
 import { ClassLocationMap } from '../../components/ClassLocationMap'
@@ -49,14 +50,7 @@ export function StudentEnrollPage() {
 
   const load = useCallback(async () => {
     if (!user) return
-    const { data: sem } = await supabase
-      .from('semesters')
-      .select('id,name,phase')
-      .neq('phase', 'closed')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    const semRow = sem as SemesterRow | null
+    const semRow = (await fetchOperationalSemester(supabase)) as SemesterRow | null
     setSemester(semRow)
 
     if (!semRow) {

@@ -27,6 +27,13 @@ type AcceptResult = {
   temp_password: string
 }
 
+type InstructorAcceptResult = {
+  application_id: string
+  email: string
+  temp_password: string
+  full_name: string
+}
+
 export function RegistrarApplicationsPage() {
   const [rows, setRows] = useState<AppRow[]>([])
   const [activeStudents, setActiveStudents] = useState(0)
@@ -34,6 +41,9 @@ export function RegistrarApplicationsPage() {
   const [showDecided, setShowDecided] = useState(false)
   const [drafts, setDrafts] = useState<Record<string, Decision>>({})
   const [acceptResult, setAcceptResult] = useState<AcceptResult | null>(null)
+  const [instructorAcceptResult, setInstructorAcceptResult] = useState<InstructorAcceptResult | null>(
+    null,
+  )
   const [msg, setMsg] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -49,7 +59,7 @@ export function RegistrarApplicationsPage() {
       supabase
         .from('semesters')
         .select('quota,phase')
-        .in('phase', ['setup', 'registration'])
+        .eq('phase', 'registration')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -138,17 +148,28 @@ export function RegistrarApplicationsPage() {
 
   async function acceptInstructor(a: AppRow) {
     setMsg(null)
-    const { error } = await supabase.rpc('rpc_decide_application', {
-      p_application_id: a.id,
-      p_status: 'accepted',
-      p_justification: null,
-    })
-    if (error) setMsg(error.message)
-    else {
-      setMsg(
-        `Instructor application accepted. In Supabase Dashboard → Authentication → Users, add user ${a.applicant_email} with User Metadata JSON including "role":"instructor" and "full_name":"…" (see README). Then open Registrar → Instructors, open their profile, and assign classes.`,
-      )
+    setInstructorAcceptResult(null)
+    const d = draft(a.id)
+    try {
+      const res = await invokeEdgeSession<{
+        ok: boolean
+        email?: string
+        temp_password?: string
+        full_name?: string
+      }>('accept-instructor-application', {
+        application_id: a.id,
+        full_name: d.fullName.trim() || null,
+      })
+      setInstructorAcceptResult({
+        application_id: a.id,
+        email: res.email ?? a.applicant_email,
+        temp_password: res.temp_password ?? '',
+        full_name: res.full_name ?? (d.fullName.trim() || a.applicant_name || a.applicant_email),
+      })
+      setDrafts((dr) => ({ ...dr, [a.id]: { justification: '', fullName: '' } }))
       await load()
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : String(err))
     }
   }
 
@@ -175,6 +196,31 @@ export function RegistrarApplicationsPage() {
       </div>
 
       {msg && <p className="text-sm text-amber-300">{msg}</p>}
+
+      {instructorAcceptResult && (
+        <div className="rounded-lg border border-emerald-700 bg-emerald-950/40 p-4 text-sm">
+          <p className="font-semibold text-emerald-200">Instructor account created</p>
+          <dl className="mt-2 grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 text-zinc-200">
+            <dt className="text-zinc-500">Email</dt>
+            <dd>{instructorAcceptResult.email}</dd>
+            <dt className="text-zinc-500">Profile name</dt>
+            <dd>{instructorAcceptResult.full_name}</dd>
+            <dt className="text-zinc-500">Temporary password</dt>
+            <dd className="font-mono break-all">{instructorAcceptResult.temp_password}</dd>
+          </dl>
+          <p className="mt-2 text-xs text-zinc-400">
+            Share the password securely. Open <strong>Registrar → Instructors</strong> to assign
+            classes to this instructor.
+          </p>
+          <button
+            type="button"
+            onClick={() => setInstructorAcceptResult(null)}
+            className="mt-2 text-xs text-zinc-300 underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {acceptResult && (
         <div className="rounded-lg border border-emerald-700 bg-emerald-950/40 p-4 text-sm">

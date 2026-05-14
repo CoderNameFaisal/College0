@@ -80,6 +80,12 @@ export function RegistrarSemestersPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold text-white">Semesters</h1>
+      <p className="max-w-3xl text-xs text-zinc-500">
+        Only <strong className="text-zinc-400">one</strong> semester may be in <strong>registration</strong>,{' '}
+        <strong>running</strong>, or <strong>grading</strong> at a time. Put every other term in{' '}
+        <strong>setup</strong> (or <strong>closed</strong>) before advancing a new term into registration. If
+        advance fails, move the other active semester back first.
+      </p>
       {msg && <p className="text-sm text-amber-300">{msg}</p>}
       <form onSubmit={createSemester} className="flex flex-wrap items-end gap-3 rounded-xl border border-zinc-800 p-4">
         <label className="space-y-1">
