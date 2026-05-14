@@ -50,6 +50,7 @@ export function StudentEnrollPage() {
 
   const load = useCallback(async () => {
     if (!user) return
+    setMsg(null)
     const semRow = (await fetchOperationalSemester(supabase)) as SemesterRow | null
     setSemester(semRow)
 
@@ -90,6 +91,12 @@ export function StudentEnrollPage() {
         .select('class_id,status')
         .eq('status', 'enrolled'),
     ])
+
+    const loadErr = [cls.error, mine.error, hist.error, counts.error]
+      .filter(Boolean)
+      .map((e) => e!.message)
+      .join(' ')
+    if (loadErr) setMsg(loadErr)
 
     setClasses((cls.data as unknown as ClassRow[]) ?? [])
     setMyCurrent((mine.data as unknown as Enrollment[]) ?? [])

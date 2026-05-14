@@ -188,12 +188,14 @@ export function StudentHomePage() {
         ) : current.length === 0 ? (
           <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4 text-sm">
             <p className="text-zinc-300">No courses registered for the current semester.</p>
-            {semester?.phase === 'registration' && (
+            {semester && (
               <Link
                 to="/student/enroll"
                 className="mt-2 inline-block text-indigo-300 hover:underline"
               >
-                Browse available classes →
+                {semester.phase === 'registration' || profile?.special_registration_eligible
+                  ? 'Browse available classes →'
+                  : 'View sections & schedule (course registration) →'}
               </Link>
             )}
           </div>

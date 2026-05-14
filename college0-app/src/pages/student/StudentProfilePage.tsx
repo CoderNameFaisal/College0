@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
+import { useStudentOperationalTerm } from '../../hooks/useStudentOperationalTerm'
 import type { EnrollmentStatus, GradeLetter, SemesterPhase } from '../../types/database'
 
 type EnrollmentHistory = {
@@ -17,6 +18,8 @@ const gradePoints: Record<GradeLetter, number> = { A: 4, B: 3, C: 2, D: 1, F: 0 
 
 export function StudentProfilePage() {
   const { user, profile, refreshProfile } = useAuth()
+  const { semester: opSem, enrollments: termEnr, catalogCount, loading: termLoading } =
+    useStudentOperationalTerm(user?.id, profile?.role ?? null)
   const [enrollments, setEnrollments] = useState<EnrollmentHistory[]>([])
   const [warnings, setWarnings] = useState<{ id: string; reason: string; created_at: string }[]>([])
   const [loading, setLoading] = useState(true)
@@ -165,6 +168,51 @@ export function StudentProfilePage() {
           .
         </p>
       </section>
+
+      {profile?.role === 'student' && (
+        <section className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
+          <h2 className="text-sm font-semibold text-white">Current semester</h2>
+          {termLoading ? (
+            <p className="text-sm text-zinc-500">Loading…</p>
+          ) : !opSem ? (
+            <p className="text-sm text-zinc-500">
+              No semester is in registration, running, or grading.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-zinc-300">
+                <span className="text-white">{opSem.name}</span>{' '}
+                <span className="text-zinc-500">({opSem.phase})</span>
+                {catalogCount != null && catalogCount > 0 && (
+                  <span className="block text-xs text-zinc-500">
+                    {catalogCount} section{catalogCount === 1 ? '' : 's'} offered this term.
+                  </span>
+                )}
+              </p>
+              {termEnr.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  No enrollments for this term yet.{' '}
+                  <Link to="/student/enroll" className="text-indigo-300 hover:underline">
+                    Browse course registration
+                  </Link>
+                  .
+                </p>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {termEnr.map((e) => (
+                    <li key={e.id} className="text-zinc-200">
+                      <span className="text-white">
+                        {e.class?.course_code ?? '?'} · {e.class?.title ?? 'Class'}
+                      </span>
+                      <span className="ml-2 text-xs text-zinc-500">{e.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </section>
+      )}
 
       {warnings.length > 0 && (
         <section className="space-y-2">
