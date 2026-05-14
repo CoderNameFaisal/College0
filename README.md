@@ -25,6 +25,20 @@ npm install
 npm run dev
 ```
 
+## Troubleshooting: Git push `403` / `Permission denied to <user>`
+
+Git is using a GitHub account that **cannot write** to `origin` (for example: `remote: Permission to CoderNameFaisal/College0.git denied to atai20`).
+
+Pick one:
+
+1. **Invite the account you actually use to log in** (e.g. `atai20`) as a **collaborator** on [CoderNameFaisal/College0](https://github.com/CoderNameFaisal/College0) with **Write** role, accept the email invite, then run `git push origin main` again.
+2. **Sign in as the repo owner** when Git prompts: open **Windows Settings → Accounts → Email & accounts** is unrelated; use **Credential Manager** → **Windows Credentials** and remove any **github.com** / **Git** / **GCM** entries for GitHub, then `git push origin main` and complete the browser OAuth flow for **CoderNameFaisal**.
+3. **Use a Personal Access Token** (repo owner: GitHub → Settings → Developer settings → Fine-grained PAT with Contents: Read and write on this repo). Push once with  
+   `git push https://<TOKEN>@github.com/CoderNameFaisal/College0.git main`  
+   then remove the token from shell history and switch the remote back to the normal HTTPS URL without the token.
+
+Your commit is already saved locally (`git log -1`); pushing only publishes it.
+
 ## Supabase (you create the project)
 
 1. Create a project at [supabase.com](https://supabase.com).
