@@ -105,11 +105,11 @@ export function StudentReviewsPage() {
       })) as { matches: number; is_hidden: boolean }
       if (r.is_hidden) {
         setOk(
-          'Review submitted but hidden by the taboo-language filter — and a warning was issued.',
+          'This review was not published (severe taboo language). Two warnings were issued to your account.',
         )
       } else if (r.matches > 0) {
         setOk(
-          `Review submitted. ${r.matches} flagged word(s) were filtered; a warning was issued.`,
+          `Review published with flagged words replaced by asterisks. One warning was issued (${r.matches} taboo list match(es)).`,
         )
       } else {
         setOk('Review submitted.')
@@ -269,7 +269,11 @@ export function StudentReviewsPage() {
                         {r.is_hidden && <span className="ml-2 text-amber-300">hidden</span>}
                       </span>
                     </div>
-                    <p className="mt-1 text-zinc-200">{r.filtered_body ?? r.body}</p>
+                    <p className="mt-1 text-zinc-200">
+                      {r.is_hidden
+                        ? 'This review was not published (3+ taboo list matches). Two warnings were recorded.'
+                        : (r.filtered_body ?? r.body)}
+                    </p>
                   </li>
                 ))}
               </ul>

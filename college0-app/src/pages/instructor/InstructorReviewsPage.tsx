@@ -51,6 +51,7 @@ export function InstructorReviewsPage() {
         if (cancelled) return
         const grouped: Record<string, Review[]> = {}
         for (const r of ((rs ?? []) as Review[])) {
+          if (r.is_hidden) continue
           if (!grouped[r.class_id]) grouped[r.class_id] = []
           grouped[r.class_id].push(r)
         }

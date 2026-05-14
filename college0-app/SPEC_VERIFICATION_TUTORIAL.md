@@ -128,7 +128,7 @@ This document maps the **course project specification** (numbered requirements 1
 
 ### 4.3 Course with &lt; 3 students cancelled; scan; special registration
 
-1. Registrar: **`/registrar/scan`** — **Run scan** (`rpc_course_cancellation_scan`). JSON lists **cancelled** class ids.
+1. Registrar: **`/registrar/scan`** — **Run scan** (`rpc_course_cancellation_scan`). Only semesters in **running** phase: classes with &lt; 3 enrolled students are cancelled, enrollments dropped to `dropped`, students warned and marked **special_registration_eligible**. JSON lists **cancelled** course codes.
 2. Affected students should get **special_registration_eligible** (per migration logic).
 3. **Pass:** Cancelled classes marked `is_cancelled`; eligible students can register per §4.1 exception.
 

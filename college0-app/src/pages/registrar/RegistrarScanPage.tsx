@@ -34,8 +34,10 @@ export function RegistrarScanPage() {
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold text-white">Course cancellation scan</h1>
       <p className="text-sm text-zinc-400">
-        Marks classes with fewer than three enrolled students as cancelled and flags affected students for a special
-        registration window (F08). Runs via database RPC (no Edge Function deploy required).
+        For semesters in the <strong className="text-zinc-200">running</strong> phase only: classes with fewer than
+        three <strong className="text-zinc-200">enrolled</strong> students are cancelled, those enrollments are
+        dropped, each affected student gets a warning and <strong className="text-zinc-200">special registration</strong>{' '}
+        eligibility, and instructors with only cancelled classes may be suspended per policy. Runs via database RPC.
       </p>
       <button
         type="button"

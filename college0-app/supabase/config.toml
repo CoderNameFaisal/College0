@@ -415,3 +415,6 @@ verify_jwt = false
 
 [functions.accept-student-application]
 verify_jwt = false
+
+[functions.submit-review]
+verify_jwt = false
