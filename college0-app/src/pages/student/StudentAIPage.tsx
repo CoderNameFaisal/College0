@@ -4,7 +4,10 @@ import { invokeEdgeSession } from '../../lib/invokeEdge'
 
 type AIResponse = {
   answer: string
+  /** Matched rows in document_embeddings (vector RAG). */
   used_rag: boolean
+  /** Schedule / enrollment / focused section context from the app DB. */
+  used_app_context?: boolean
   hallucination_warning: boolean
 }
 
@@ -77,13 +80,19 @@ export function StudentAIPage() {
         <div className="space-y-2">
           {response.hallucination_warning && (
             <div className="rounded border border-amber-700/60 bg-amber-950/30 p-3 text-sm text-amber-200">
-              ⚠ No matching documents were found in the local knowledge base — this answer is
-              LLM-only and may hallucinate.
+              ⚠ No policy documents and no schedule data were attached — this answer is LLM-only and
+              may hallucinate. If you expect policy snippets, run <code className="text-amber-100">npm run seed:rag</code> once (see README).
             </div>
           )}
-          {!response.hallucination_warning && response.used_rag && (
+          {response.used_rag && (
             <div className="rounded border border-emerald-700/40 bg-emerald-950/30 p-3 text-xs text-emerald-300">
-              ✓ Answer grounded in local documents (RAG).
+              ✓ Answer grounded in local policy documents (vector search).
+            </div>
+          )}
+          {!response.used_rag && response.used_app_context && (
+            <div className="rounded border border-sky-800/60 bg-sky-950/25 p-3 text-xs text-sky-200">
+              ℹ No policy documents matched your question, but your enrollments and course details
+              were sent to the model — answers about your schedule should still be reliable.
             </div>
           )}
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-200 whitespace-pre-wrap">

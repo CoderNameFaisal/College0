@@ -61,9 +61,11 @@ Deno.serve(async (req) => {
 
     // Instructors get an extra context block listing their classes + rosters
     // so the assistant can answer questions about their students.
+    // Use service-role client so nested profile reads are not blocked by RLS
+    // (students cannot SELECT instructor rows; embeds would otherwise drop data).
     let instructorContext = ''
     if (role === 'instructor' && user) {
-      const { data: rows } = await userClient
+      const { data: rows } = await admin
         .from('classes')
         .select(
           'course_code,title,enrollments(status,grade,student:profiles(full_name,student_id,cumulative_gpa,warning_count))',
@@ -99,7 +101,7 @@ Deno.serve(async (req) => {
     // and grades.
     let studentContext = ''
     if (role === 'student' && user) {
-      const { data: rows } = await userClient
+      const { data: rows } = await admin
         .from('enrollments')
         .select(
           'status,grade,class:classes(course_code,title,schedule_time,location_label,location_lat,location_lng,instructor:profiles!classes_instructor_id_fkey(full_name),semester:semesters(name,phase))',
@@ -164,7 +166,7 @@ Deno.serve(async (req) => {
       }
 
       if (allowClass) {
-        const { data: crow } = await userClient
+        const { data: crow } = await admin
           .from('classes')
           .select(
             'course_code,title,schedule_time,location_label,location_lat,location_lng,semester:semesters(name,phase)',
@@ -190,8 +192,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    const noLocal =
-      !context.trim() && !instructorContext && !studentContext && !focusedClassContext.trim()
+    const used_rag_chunks = context.trim().length > 0
+    const used_app_context =
+      instructorContext.length > 0 ||
+      studentContext.length > 0 ||
+      focusedClassContext.trim().length > 0
+    const hallucination_warning = !used_rag_chunks && !used_app_context
     const system = `You are College0, an AI assistant for a graduate college program.
 User role: ${role}. Profile status: ${profile?.status ?? 'unknown'}.
 Answer using the CONTEXT when relevant. If CONTEXT is empty, say you are inferring without local documents and keep answers conservative.
@@ -207,8 +213,12 @@ ${context || '(none)'}${instructorContext}${studentContext}${focusedClassContext
 
     return corsJson({
       answer,
-      used_rag: !noLocal,
-      hallucination_warning: noLocal,
+      /** True when vector search returned document chunks from document_embeddings. */
+      used_rag: used_rag_chunks,
+      /** True when schedule/roster/section context was attached for this user. */
+      used_app_context,
+      /** True only when there is no RAG text and no app context (pure LLM). */
+      hallucination_warning,
     })
   } catch (e) {
     return corsJson({ error: String(e) }, 500)

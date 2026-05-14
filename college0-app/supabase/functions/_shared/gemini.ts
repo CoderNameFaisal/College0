@@ -1,7 +1,8 @@
 /** Google Gemini generateContent + embedContent (REST v1beta). */
 
+/** Default chat/JSON model: 2.0 Flash is deprecated with free-tier limit 0 — use 2.5 family. */
 function defaultModel(): string {
-  return Deno.env.get('GEMINI_MODEL')?.trim() || 'gemini-2.0-flash'
+  return Deno.env.get('GEMINI_MODEL')?.trim() || 'gemini-2.5-flash-lite'
 }
 
 function embeddingModel(): string {
@@ -19,6 +20,30 @@ type GeminiGenerateContentResponse = {
     content?: { parts?: Array<{ text?: string }> }
   }>
   error?: { message?: string }
+}
+
+async function readGeminiHttpError(res: Response, modelLabel: string): Promise<string> {
+  const raw = await res.text()
+  try {
+    const j = JSON.parse(raw) as {
+      error?: { code?: number; message?: string; status?: string }
+    }
+    const msg = j.error?.message ?? raw
+    const code = j.error?.code
+    if (code === 429 || /quota|RESOURCE_EXHAUSTED|rate limit/i.test(msg)) {
+      const hint =
+        modelLabel.startsWith('gemini-embedding') || modelLabel.includes('embedding')
+          ? `Set Edge secret GEMINI_EMBEDDING_MODEL (e.g. gemini-embedding-001) and billing if needed.`
+          : `Set Edge secret GEMINI_MODEL to a current model such as gemini-2.5-flash-lite or gemini-2.5-flash; enable billing in Google AI / Cloud if you need higher limits.`
+      return [
+        msg,
+        ` (Gemini ${code ?? res.status}: quota/rate limit. Model: ${modelLabel}. ${hint} See https://ai.google.dev/gemini-api/docs/rate-limits )`,
+      ].join('')
+    }
+    return msg
+  } catch {
+    return raw || `${res.status} ${res.statusText}`
+  }
 }
 
 /** Single text embedding for RAG queries (cosine search in pgvector). */
@@ -44,7 +69,7 @@ export async function geminiEmbedText(opts: {
       outputDimensionality: dim,
     }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw new Error(await readGeminiHttpError(res, model))
   const json = (await res.json()) as {
     embedding?: { values?: number[] }
     error?: { message?: string }
@@ -88,7 +113,7 @@ export async function geminiGenerateText(opts: {
       },
     }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw new Error(await readGeminiHttpError(res, model))
   return extractText(await res.json())
 }
 
@@ -117,6 +142,6 @@ export async function geminiGenerateJson(opts: {
       },
     }),
   })
-  if (!res.ok) throw new Error(await res.text())
+  if (!res.ok) throw new Error(await readGeminiHttpError(res, model))
   return extractText(await res.json())
 }

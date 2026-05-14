@@ -9,6 +9,7 @@
     "supabase:login": "supabase login",
     "supabase:link": "supabase link",
     "build": "tsc -b && vite build",
+    "seed:rag": "node scripts/seed-rag.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

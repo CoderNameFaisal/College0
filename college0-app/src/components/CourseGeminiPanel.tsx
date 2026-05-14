@@ -4,6 +4,7 @@ import { invokeEdgeSession } from '../lib/invokeEdge'
 type AIResponse = {
   answer: string
   used_rag: boolean
+  used_app_context?: boolean
   hallucination_warning: boolean
 }
 
@@ -76,7 +77,15 @@ export function CourseGeminiPanel({ classId, courseCode, title }: Props) {
             <div className="rounded border border-zinc-800 bg-zinc-950/80 p-2 text-xs text-zinc-200">
               <p className="whitespace-pre-wrap">{reply.answer}</p>
               {reply.hallucination_warning && (
-                <p className="mt-1 text-[10px] text-amber-400/90">Limited local context — verify facts.</p>
+                <p className="mt-1 text-[10px] text-amber-400/90">
+                  No policy docs or section context — verify facts. Run <code>npm run seed:rag</code> for
+                  RAG snippets.
+                </p>
+              )}
+              {!reply.hallucination_warning && !reply.used_rag && reply.used_app_context && (
+                <p className="mt-1 text-[10px] text-sky-400/90">
+                  This section&apos;s details were sent; no policy doc match for your exact wording.
+                </p>
               )}
             </div>
           )}

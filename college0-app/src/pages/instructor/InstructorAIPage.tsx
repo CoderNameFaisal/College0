@@ -5,6 +5,7 @@ import { invokeEdgeSession } from '../../lib/invokeEdge'
 type AIResponse = {
   answer: string
   used_rag: boolean
+  used_app_context?: boolean
   hallucination_warning: boolean
 }
 
@@ -76,13 +77,20 @@ export function InstructorAIPage() {
         <div className="space-y-2">
           {response.hallucination_warning && (
             <div className="rounded border border-amber-700/60 bg-amber-950/30 p-3 text-sm text-amber-200">
-              ⚠ No matching documents were found in the local knowledge base — this answer is
-              LLM-only and may hallucinate.
+              ⚠ No policy documents and no roster context — LLM-only; may hallucinate. Run{' '}
+              <code className="text-amber-100">npm run seed:rag</code> if you need the policy knowledge
+              base (README).
             </div>
           )}
-          {!response.hallucination_warning && response.used_rag && (
+          {response.used_rag && (
             <div className="rounded border border-emerald-700/40 bg-emerald-950/30 p-3 text-xs text-emerald-300">
-              ✓ Answer grounded in local documents (RAG).
+              ✓ Answer grounded in local policy documents (vector search).
+            </div>
+          )}
+          {!response.used_rag && response.used_app_context && (
+            <div className="rounded border border-sky-800/60 bg-sky-950/25 p-3 text-xs text-sky-200">
+              ℹ No policy documents matched, but your class rosters were sent to the model — answers
+              about your students should still be reliable.
             </div>
           )}
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-200 whitespace-pre-wrap">

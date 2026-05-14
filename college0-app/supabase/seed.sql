@@ -8,4 +8,4 @@ insert into public.taboo_words (word)
 values ('badword'), ('offensive')
 on conflict (word) do nothing;
 
--- RAG: document_embeddings use vector(768) + Gemini embedContent (see Edge / migration 20250513190000).
+-- RAG: rows live in document_embeddings (vector 768). After migration 20260515100000 the table is empty until you run: cd college0-app && npm run seed:rag

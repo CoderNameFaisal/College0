@@ -4,6 +4,7 @@ import { invokeEdgeSession } from '../../lib/invokeEdge'
 type AIResponse = {
   answer: string
   used_rag: boolean
+  used_app_context?: boolean
   hallucination_warning: boolean
 }
 
@@ -69,13 +70,14 @@ export function VisitorAIPage() {
         <div className="space-y-2">
           {response.hallucination_warning && (
             <div className="rounded border border-amber-700/60 bg-amber-950/30 p-3 text-sm text-amber-200">
-              ⚠ No matching documents were found in the local knowledge base — this answer is
-              LLM-only and may hallucinate.
+              ⚠ No policy documents matched — this answer is LLM-only and may hallucinate. Deployers
+              can run <code className="text-amber-100">npm run seed:rag</code> (see README) to load the
+              knowledge base.
             </div>
           )}
-          {!response.hallucination_warning && response.used_rag && (
+          {response.used_rag && (
             <div className="rounded border border-emerald-700/40 bg-emerald-950/30 p-3 text-xs text-emerald-300">
-              ✓ Answer grounded in local documents (RAG).
+              ✓ Answer grounded in local policy documents (vector search).
             </div>
           )}
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-200 whitespace-pre-wrap">
