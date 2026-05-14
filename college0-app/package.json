@@ -10,6 +10,7 @@
     "supabase:link": "supabase link",
     "build": "tsc -b && vite build",
     "seed:rag": "node scripts/seed-rag.mjs",
+    "seed:registrar": "node scripts/seed-registrar.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
